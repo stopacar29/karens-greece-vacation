@@ -4,9 +4,10 @@ services:
   - type: web
     runtime: node
     name: karens-greece-trip
-    # All from repo root (no cd): install and build web-app, then install server deps
+    # All from repo root: install and build web-app, then install server deps into server/node_modules
     buildCommand: npm install --prefix web-app && npm run build --prefix web-app && npm install --prefix server
-    startCommand: node server/index.js
+    # Run from server/ so Node finds server/node_modules (no separate script file needed)
+    startCommand: cd server && node index.js
     healthCheckPath: /health
     envVars:
       - key: OPENAI_API_KEY
