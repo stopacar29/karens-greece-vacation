@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useTrip } from '../context/TripContext';
 import { FAMILIES } from '../constants/families';
 import type { DayItem } from '../types/trip';
@@ -147,11 +146,6 @@ export default function Schedule() {
     return items;
   }
 
-  const addItem = (dateKey: string, item: DayItem) => {
-    const list = [...(dayItems[dateKey] || []), item];
-    updateTrip({ dayItems: { ...dayItems, [dateKey]: list } });
-  };
-
   const removeItem = (dateKey: string, index: number) => {
     const list = (dayItems[dateKey] || []).filter((_, i) => i !== index);
     updateTrip({ dayItems: { ...dayItems, [dateKey]: list } });
@@ -163,7 +157,7 @@ export default function Schedule() {
     <>
       <div className="card">
         <h2 className="sectionLabel">Schedule by day</h2>
-        <p className="hint">Flights, hotel check-ins, and activities from the Flights, Hotel / House, and Activities pages appear here when you set their dates. Add other activities below.</p>
+        <p className="hint">Flights, hotel check-ins, and activities from the Flights, Hotel / House, and Activities pages appear here when you set their dates.</p>
         {dateKeys.length === 0 ? (
           <p style={{ color: '#5c5c5c' }}>Add a departure date (Flights), a check-in date (Hotel / House), or an activity date (Activities), to see days here.</p>
         ) : (
@@ -176,9 +170,7 @@ export default function Schedule() {
                 displayDate={toDisplayDate(dateKey)}
                 items={items}
                 manualCount={manualCount}
-                familyList={familyListWithAll}
                 getFamilyName={getFamilyName}
-                onAdd={(item) => addItem(dateKey, item)}
                 onRemove={(index) => removeItem(dateKey, index)}
               />
             );
@@ -193,30 +185,15 @@ function DayBlock({
   displayDate,
   items,
   manualCount,
-  familyList,
   getFamilyName,
-  onAdd,
   onRemove,
 }: {
   displayDate: string;
   items: DayItem[];
   manualCount: number;
-  familyList: { id: string; name: string }[];
   getFamilyName: (id: string) => string;
-  onAdd: (item: DayItem) => void;
   onRemove: (index: number) => void;
 }) {
-  const [newFamily, setNewFamily] = useState(familyList[0]?.id ?? '');
-  const [newActivity, setNewActivity] = useState('');
-  const [newTime, setNewTime] = useState('');
-
-  const handleAdd = () => {
-    if (!newActivity.trim()) return;
-    onAdd({ familyId: newFamily || familyList[0]?.id || '', activity: newActivity.trim(), time: newTime.trim() });
-    setNewActivity('');
-    setNewTime('');
-  };
-
   return (
     <div style={{ marginBottom: 24, paddingBottom: 20, borderBottom: '1px solid #eee' }}>
       <h3 style={{ fontSize: 18, color: '#1a4d6d', margin: '0 0 10px 0' }}>{displayDate}:</h3>
@@ -254,39 +231,6 @@ function DayBlock({
           </tbody>
         </table>
       )}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'flex-end' }}>
-        <div className="inputRow" style={{ marginBottom: 0, flex: '1 1 120px' }}>
-          <label>Family</label>
-          <select
-            value={newFamily}
-            onChange={(e) => setNewFamily(e.target.value)}
-            style={{ width: '100%', padding: '8px 10px', border: '1px solid #ddd', borderRadius: 8 }}
-          >
-            {familyList.map((f) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
-            ))}
-          </select>
-        </div>
-        <div className="inputRow" style={{ marginBottom: 0, flex: '2 1 180px' }}>
-          <label>Activity</label>
-          <input
-            value={newActivity}
-            onChange={(e) => setNewActivity(e.target.value)}
-            placeholder="e.g. Hotel check-in, Boat tour"
-          />
-        </div>
-        <div className="inputRow" style={{ marginBottom: 0, flex: '1 1 80px' }}>
-          <label>Time</label>
-          <input
-            value={newTime}
-            onChange={(e) => setNewTime(e.target.value)}
-            placeholder="9:00 AM"
-          />
-        </div>
-        <button type="button" className="btn btnSecondary" onClick={handleAdd}>
-          Add
-        </button>
-      </div>
     </div>
   );
 }

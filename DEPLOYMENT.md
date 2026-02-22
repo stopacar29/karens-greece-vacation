@@ -40,7 +40,15 @@ Render will redeploy; after that, Import will work.
 ### Note about free tier
 
 - The app URL may “spin up” after a short idle; the first open can take 30–60 seconds.
-- Trip data is stored on the server; on Render’s free tier the filesystem can be reset on redeploys. For long‑term use, consider a paid plan or a small persistent disk if you add one later.
+- **Data persistence:** On the free tier, the server’s disk is **ephemeral** — trip data and gallery photos can be lost when the service restarts or redeploys. To keep data across restarts, use a **persistent disk** (see below).
+
+### Keeping data across restarts (persistent disk on Render)
+
+1. In the Render dashboard, open your **Web Service**.
+2. Go to **Settings** → **Disks** (or **Add Disk**).
+3. Add a disk, e.g. **Mount Path:** `/data`, **Size:** 1 GB.
+4. Add an **Environment Variable**: **Key** `DATA_DIR`, **Value** `/data`.
+5. Redeploy. Trip data and gallery uploads will then be stored on the disk and survive restarts and redeploys.
 
 ---
 

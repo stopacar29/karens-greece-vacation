@@ -15,7 +15,8 @@ const pdf = require('pdf-parse');
 const OpenAI = require('openai').default;
 
 const app = express();
-const DATA_DIR = path.join(__dirname, 'data');
+// Use DATA_DIR env for persistent storage (e.g. Render disk mounted at /data)
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const TRIP_FILE = path.join(DATA_DIR, 'trip.json');
 const GALLERY_DIR = path.join(DATA_DIR, 'gallery');
 

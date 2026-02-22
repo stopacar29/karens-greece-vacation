@@ -92,6 +92,10 @@ type TripContextValue = {
   updateTrip: (partial: Partial<TripData>) => void;
   updateDaySchedule: (date: string, daySchedule: DaySchedule) => void;
   mergeFromImport: (partial: Partial<TripData>) => void;
+  /** Push current data to the server now (for "Sync to server"). */
+  saveToServer: () => Promise<{ ok: boolean; error?: string }>;
+  /** Refetch from server and replace local state (for "Load from server"). */
+  loadFromServer: () => Promise<{ ok: boolean; error?: string }>;
 };
 
 const TripContext = createContext<TripContextValue | null>(null);
@@ -189,8 +193,43 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
     });
   }, []);
 
+  const tripDataRef = useRef(tripData);
+  tripDataRef.current = tripData;
+
+  const saveToServer = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const res = await fetch(TRIP_API, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(tripDataRef.current),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        return { ok: false, error: (err as { error?: string }).error || res.statusText };
+      }
+      return { ok: true };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Network error' };
+    }
+  }, []);
+
+  const loadFromServer = useCallback(async (): Promise<{ ok: boolean; error?: string }> => {
+    try {
+      const res = await fetch(TRIP_API);
+      if (!res.ok) return { ok: false, error: res.status === 404 ? 'No data on server yet' : res.statusText };
+      const parsed = await res.json();
+      if (parsed && typeof parsed === 'object' && !('message' in parsed && parsed.message)) {
+        setTripData((prev) => mergeParsedIntoState(prev, parsed as Partial<TripData>));
+        return { ok: true };
+      }
+      return { ok: false, error: 'Invalid response' };
+    } catch (e) {
+      return { ok: false, error: e instanceof Error ? e.message : 'Network error' };
+    }
+  }, []);
+
   return (
-    <TripContext.Provider value={{ tripData, updateTrip, updateDaySchedule, mergeFromImport }}>
+    <TripContext.Provider value={{ tripData, updateTrip, updateDaySchedule, mergeFromImport, saveToServer, loadFromServer }}>
       {children}
     </TripContext.Provider>
   );
