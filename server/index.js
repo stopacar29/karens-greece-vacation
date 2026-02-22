@@ -10,12 +10,14 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const multer = require('multer');
 const pdf = require('pdf-parse');
 const OpenAI = require('openai').default;
 
 const app = express();
 const DATA_DIR = path.join(__dirname, 'data');
 const TRIP_FILE = path.join(DATA_DIR, 'trip.json');
+const GALLERY_DIR = path.join(DATA_DIR, 'gallery');
 
 function ensureDataDir() {
   if (!fs.existsSync(DATA_DIR)) {
@@ -93,6 +95,61 @@ app.put('/api/trip', (req, res) => {
     res.status(500).json({ error: e?.message || 'Failed to save trip data' });
   }
 });
+
+// Gallery: allow anyone with the link to upload and view photos
+function ensureGalleryDir() {
+  if (!fs.existsSync(GALLERY_DIR)) {
+    fs.mkdirSync(GALLERY_DIR, { recursive: true });
+  }
+}
+const galleryStorage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    ensureGalleryDir();
+    cb(null, GALLERY_DIR);
+  },
+  filename: (_req, file, cb) => {
+    const ext = (path.extname(file.originalname) || '.jpg').toLowerCase().replace(/[^a-z]/g, '');
+    const safe = ext || 'jpg';
+    cb(null, `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.${safe}`);
+  },
+});
+const upload = multer({ storage: galleryStorage, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
+
+app.post('/api/gallery/upload', upload.single('photo'), (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    const url = `/api/gallery/images/${req.file.filename}`;
+    res.json({ url });
+  } catch (e) {
+    console.error('Gallery upload error:', e);
+    res.status(500).json({ error: e?.message || 'Upload failed' });
+  }
+});
+
+app.get('/api/gallery', (req, res) => {
+  try {
+    ensureGalleryDir();
+    const names = fs.readdirSync(GALLERY_DIR).filter((n) => /\.(jpg|jpeg|png|gif|webp)$/i.test(n));
+    const images = names.map((n) => ({ url: `/api/gallery/images/${n}` }));
+    res.json({ images });
+  } catch (e) {
+    console.error('Gallery list error:', e);
+    res.status(500).json({ error: e?.message || 'Failed to list images' });
+  }
+});
+
+app.get('/api/gallery/images/:filename', (req, res) => {
+  try {
+    const name = path.basename(req.params.filename);
+    if (!/^[0-9a-z\-\.]+\.(jpg|jpeg|png|gif|webp)$/i.test(name)) return res.status(400).end();
+    const filePath = path.join(GALLERY_DIR, name);
+    if (!fs.existsSync(filePath)) return res.status(404).end();
+    res.sendFile(filePath);
+  } catch (e) {
+    res.status(500).end();
+  }
+});
+
 app.use(cors());
 app.use(express.json({ limit: '20mb' }));
 

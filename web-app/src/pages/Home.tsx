@@ -24,7 +24,9 @@ export default function Home() {
         <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#5c5c5c' }}>Quick links</h3>
         <p style={{ margin: '4px 0' }}>📅 Schedule — calendar & daily plans</p>
         <p style={{ margin: '4px 0' }}>✈️ Travel — flights, Santorini/Crete stay, transfers</p>
-        <p style={{ margin: '4px 0' }}>👨‍👩‍👧‍👦 Guests — who's coming</p>
+        <p style={{ margin: '4px 0' }}>🖼️ Family Gallery — upload and view trip photos</p>
+        <p style={{ margin: '4px 0' }}>ℹ️ Travel Information — tipping, outlets, Greek phrases</p>
+        <p style={{ margin: '4px 0' }}>👨‍👩‍👧‍👦 Guests — who&apos;s coming</p>
         <p style={{ margin: '4px 0' }}>📄 Import — paste or choose a PDF or image to fill trip data</p>
       </div>
     </>
