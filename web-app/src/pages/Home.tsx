@@ -90,6 +90,16 @@ export default function Home() {
         </p>
       </div>
       <div className="card">
+        <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#5c5c5c' }}>Quick links</h3>
+        <p style={{ margin: '4px 0' }}>📅 Schedule — calendar &amp; daily plans</p>
+        <p style={{ margin: '4px 0' }}>✈️ Flights — flight details by family</p>
+        <p style={{ margin: '4px 0' }}>🏨 Hotel / House — Santorini &amp; Crete accommodation</p>
+        <p style={{ margin: '4px 0' }}>📌 Activities — dinners, tours, transfers, important numbers</p>
+        <p style={{ margin: '4px 0' }}>🖼️ Family Gallery — upload and view trip photos</p>
+        <p style={{ margin: '4px 0' }}>ℹ️ Travel Information — tipping, outlets, Greek phrases</p>
+        <p style={{ margin: '4px 0' }}>👨‍👩‍👧‍👦 Guests — who&apos;s coming</p>
+      </div>
+      <div className="card">
         <h3 style={{ margin: '0 0 8px 0', fontSize: 16, color: '#1a4d6d' }}>Save &amp; sync data</h3>
         <p className="hint" style={{ margin: '0 0 12px 0' }}>
           Data is saved to this device and (when online) to the server so others can see it. Use the same website URL on all devices. If data is missing on another device, sync below.
@@ -117,16 +127,6 @@ export default function Home() {
             {syncMessage && !['saved', 'loaded', 'error'].includes(syncStatus) && syncMessage}
           </p>
         )}
-      </div>
-      <div className="card">
-        <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#5c5c5c' }}>Quick links</h3>
-        <p style={{ margin: '4px 0' }}>📅 Schedule — calendar &amp; daily plans</p>
-        <p style={{ margin: '4px 0' }}>✈️ Flights — flight details by family</p>
-        <p style={{ margin: '4px 0' }}>🏨 Hotel / House — Santorini &amp; Crete accommodation</p>
-        <p style={{ margin: '4px 0' }}>📌 Activities — dinners, tours, transfers, important numbers</p>
-        <p style={{ margin: '4px 0' }}>🖼️ Family Gallery — upload and view trip photos</p>
-        <p style={{ margin: '4px 0' }}>ℹ️ Travel Information — tipping, outlets, Greek phrases</p>
-        <p style={{ margin: '4px 0' }}>👨‍👩‍👧‍👦 Guests — who&apos;s coming</p>
       </div>
     </>
   );

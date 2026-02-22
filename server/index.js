@@ -15,6 +15,9 @@ const pdf = require('pdf-parse');
 const OpenAI = require('openai').default;
 
 const app = express();
+app.use(cors());
+app.use(express.json({ limit: '20mb' }));
+
 // Use DATA_DIR env for persistent storage (e.g. Render disk mounted at /data)
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const TRIP_FILE = path.join(DATA_DIR, 'trip.json');
@@ -150,9 +153,6 @@ app.get('/api/gallery/images/:filename', (req, res) => {
     res.status(500).end();
   }
 });
-
-app.use(cors());
-app.use(express.json({ limit: '20mb' }));
 
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
