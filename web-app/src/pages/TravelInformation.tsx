@@ -13,19 +13,25 @@ export default function TravelInformation() {
         <p style={{ margin: '0 0 12px 0', lineHeight: 1.5 }}>
           Greece uses <strong>230 V, 50 Hz</strong> AC. Outlets are typically <strong>Type C</strong> (Europlug, two round pins) and <strong>Type F</strong> (Schuko, two round pins with side grounding clips). If your devices use North American (110–120 V) or UK (Type G) plugs, you’ll need a travel adapter; many phone and laptop chargers accept 100–240 V, so an adapter alone is enough.
         </p>
-        <div style={{ marginTop: 16, padding: 16, background: '#f5f5f5', borderRadius: 8, display: 'inline-block' }}>
-          <svg width="180" height="100" viewBox="0 0 180 100" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Type C and F plug shapes">
-            <rect x="20" y="30" width="60" height="40" rx="4" fill="#333" />
-            <circle cx="45" cy="50" r="4" fill="#fff" />
-            <circle cx="75" cy="50" r="4" fill="#fff" />
-            <text x="50" y="88" fontSize="12" fill="#555" textAnchor="middle">Type C (Europlug)</text>
-            <rect x="100" y="25" width="70" height="50" rx="4" fill="#333" />
-            <circle cx="120" cy="50" r="4" fill="#fff" />
-            <circle cx="150" cy="50" r="4" fill="#fff" />
-            <rect x="118" y="22" width="4" height="8" fill="#666" />
-            <rect x="148" y="22" width="4" height="8" fill="#666" />
-            <text x="135" y="88" fontSize="12" fill="#555" textAnchor="middle">Type F (Schuko)</text>
-          </svg>
+        <div style={{ marginTop: 16, padding: 16, background: '#f5f5f5', borderRadius: 8, display: 'flex', gap: 48, flexWrap: 'wrap' }}>
+          <div style={{ textAlign: 'center' }}>
+            <svg width="100" height="70" viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Type C Europlug">
+              <rect x="15" y="20" width="70" height="35" rx="4" fill="#333" />
+              <circle cx="40" cy="37" r="4" fill="#fff" />
+              <circle cx="60" cy="37" r="4" fill="#fff" />
+            </svg>
+            <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#555' }}>Type C (Europlug)</p>
+          </div>
+          <div style={{ textAlign: 'center' }}>
+            <svg width="100" height="70" viewBox="0 0 100 70" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="Type F Schuko">
+              <rect x="10" y="15" width="80" height="45" rx="4" fill="#333" />
+              <circle cx="38" cy="37" r="4" fill="#fff" />
+              <circle cx="62" cy="37" r="4" fill="#fff" />
+              <rect x="36" y="12" width="4" height="8" fill="#666" />
+              <rect x="60" y="12" width="4" height="8" fill="#666" />
+            </svg>
+            <p style={{ margin: '8px 0 0 0', fontSize: 12, color: '#555' }}>Type F (Schuko)</p>
+          </div>
         </div>
       </div>
 

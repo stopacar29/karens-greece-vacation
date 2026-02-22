@@ -163,9 +163,9 @@ export default function Schedule() {
     <>
       <div className="card">
         <h2 className="sectionLabel">Schedule by day</h2>
-        <p className="hint">Flights, hotel check-ins, and activities from the Travel page appear here when you set their dates. Add other activities below.</p>
+        <p className="hint">Flights, hotel check-ins, and activities from the Flights, Hotel / House, and Activities pages appear here when you set their dates. Add other activities below.</p>
         {dateKeys.length === 0 ? (
-          <p style={{ color: '#5c5c5c' }}>Add a departure date for a flight, a check-in date for accommodation, or an activity date on the Travel page, to see days here.</p>
+          <p style={{ color: '#5c5c5c' }}>Add a departure date (Flights), a check-in date (Hotel / House), or an activity date (Activities), to see days here.</p>
         ) : (
           dateKeys.map((dateKey) => {
             const items = getItemsForDay(dateKey);
