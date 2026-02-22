@@ -4,9 +4,8 @@ services:
   - type: web
     runtime: node
     name: karens-greece-trip
-    buildCommand: |
-      cd web-app && npm ci && npm run build
-      cd ../server && npm ci
+    # Single line so both web-app and server install in one shell (server deps must be in server/)
+    buildCommand: cd web-app && npm ci && npm run build && cd ../server && npm ci
     startCommand: cd server && node index.js
     healthCheckPath: /health
     envVars:
