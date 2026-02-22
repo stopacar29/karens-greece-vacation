@@ -4,9 +4,10 @@ services:
   - type: web
     runtime: node
     name: karens-greece-trip
-    # Single line so both web-app and server install in one shell (server deps must be in server/)
-    buildCommand: cd web-app && npm ci && npm run build && cd ../server && npm ci
-    startCommand: cd server && node index.js
+    # Build from repo root: web-app first, then server deps (single line = one shell)
+    buildCommand: cd web-app && npm ci && npm run build && cd ../server && npm install
+    # Run from repo root so Node resolves server/node_modules when loading server/index.js
+    startCommand: node server/index.js
     healthCheckPath: /health
     envVars:
       - key: OPENAI_API_KEY
