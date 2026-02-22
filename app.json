@@ -1,0 +1,33 @@
+{
+  "expo": {
+    "name": "Karen's Greece 70th",
+    "slug": "karens-greece-vacation",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "scheme": "karens-greece",
+    "platforms": [
+      "ios",
+      "android"
+    ],
+    "ios": {
+      "bundleIdentifier": "com.family.karensgreece70",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSAppTransportSecurity": {
+          "NSAllowsLocalNetworking": true
+        }
+      }
+    },
+    "android": {
+      "package": "com.family.karensgreece70",
+      "adaptiveIcon": {
+        "backgroundColor": "#1a4d6d"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ]
+  }
+}

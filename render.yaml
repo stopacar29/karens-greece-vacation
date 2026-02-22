@@ -1,0 +1,15 @@
+# Deploy to Render.com so family can open one URL to use the app.
+# See DEPLOYMENT.md for step-by-step.
+services:
+  - type: web
+    runtime: node
+    name: karens-greece-trip
+    buildCommand: |
+      cd web-app && npm ci && npm run build
+      cd ../server && npm ci
+    startCommand: cd server && node index.js
+    healthCheckPath: /health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+        # Add your key in Render Dashboard for PDF/OCR import (optional)

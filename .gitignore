@@ -1,0 +1,27 @@
+# Dependencies
+node_modules/
+
+# Build output
+web-app/dist/
+
+# Environment / secrets
+.env
+.env.local
+*.env
+
+# Server trip data (optional: remove this line if you want to commit trip.json)
+server/data/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Logs
+*.log
+npm-debug.log*
