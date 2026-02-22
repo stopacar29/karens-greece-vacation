@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { FAMILIES } from '../constants/families';
 import type { TripData, FlightInfo, DaySchedule, ActivityItem } from '../types/trip';
-import { defaultTripData, DEFAULT_SCHEDULE, normalizeFlight, normalizeActivity } from '../types/trip';
+import { defaultTripData, normalizeFlight, normalizeActivity } from '../types/trip';
 
 const STORAGE_KEY = 'karens_greece_trip';
 const TRIP_API = '/api/trip';
