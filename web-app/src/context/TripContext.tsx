@@ -117,7 +117,7 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(tripData));
   }, [tripData]);
 
-  // Load from server on mount (so shared data is shown when deployed)
+  // Load from server automatically on first use and every visit (so everyone sees the same data)
   useEffect(() => {
     let cancelled = false;
     fetch(TRIP_API)
