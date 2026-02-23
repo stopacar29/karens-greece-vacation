@@ -2,6 +2,8 @@
 
 Trip data is stored on the server (`server/data/trip.json`). Once deployed, everyone uses the **same URL** and sees the same data.
 
+**→ For a step-by-step, copy-paste deploy with data + pictures saved and low cost, see [FAMILY-DEPLOY.md](./FAMILY-DEPLOY.md).**
+
 ---
 
 ## Option 1: Deploy to Render (one URL, ~5 minutes)
