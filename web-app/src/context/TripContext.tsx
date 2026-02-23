@@ -7,7 +7,7 @@ const STORAGE_KEY = 'karens_greece_trip';
 const TRIP_API = '/api/trip';
 const ids = FAMILIES.map((f) => f.id);
 const idsWithAll = ['all', ...ids];
-const SAVE_DEBOUNCE_MS = 1200;
+const SAVE_DEBOUNCE_MS = 300;
 
 function emptyFlights(): Record<string, FlightInfo[]> {
   return Object.fromEntries(
@@ -118,21 +118,26 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
   }, [tripData]);
 
   // Load from server automatically on first use and every visit (so everyone sees the same data)
-  useEffect(() => {
-    let cancelled = false;
+  const fetchAndMergeFromServer = useCallback(() => {
     fetch(TRIP_API)
-      .then((res) => {
-        if (cancelled || !res.ok) return null;
-        return res.json();
-      })
+      .then((res) => (res.ok ? res.json() : null))
       .then((parsed) => {
-        if (cancelled || parsed == null || parsed.message) return;
-        if (typeof parsed !== 'object') return;
+        if (parsed == null || parsed.message || typeof parsed !== 'object') return;
         setTripData((prev) => mergeParsedIntoState(prev, parsed as Partial<TripData>));
       })
       .catch(() => {});
-    return () => { cancelled = true; };
   }, []);
+
+  useEffect(() => {
+    fetchAndMergeFromServer();
+  }, [fetchAndMergeFromServer]);
+
+  // When app comes back online, sync from server once
+  useEffect(() => {
+    const onOnline = () => { fetchAndMergeFromServer(); };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, [fetchAndMergeFromServer]);
 
   // Save to server (debounced) so other family members see updates
   const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);

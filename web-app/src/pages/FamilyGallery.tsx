@@ -67,7 +67,7 @@ export default function FamilyGallery() {
       <div className="card">
         <h2 className="sectionLabel">Family Gallery</h2>
         <p className="hint">
-          Anyone with this link can upload and view photos. Add your trip pictures below.
+          Anyone with this link can upload and view photos. Add your trip pictures below. Photos are stored on the server; if you use a host with an ephemeral disk (e.g. Render free tier), add a persistent disk and set <strong>DATA_DIR</strong> so photos and trip data survive restarts.
         </p>
         <label style={{ display: 'inline-block', marginTop: 12 }}>
           <input

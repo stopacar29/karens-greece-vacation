@@ -146,8 +146,11 @@ app.get('/api/gallery/images/:filename', (req, res) => {
   try {
     const name = path.basename(req.params.filename);
     if (!/^[0-9a-z\-\.]+\.(jpg|jpeg|png|gif|webp)$/i.test(name)) return res.status(400).end();
-    const filePath = path.join(GALLERY_DIR, name);
+    const filePath = path.resolve(GALLERY_DIR, name);
     if (!fs.existsSync(filePath)) return res.status(404).end();
+    const ext = path.extname(name).toLowerCase();
+    const types = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp' };
+    if (types[ext]) res.setHeader('Content-Type', types[ext]);
     res.sendFile(filePath);
   } catch (e) {
     res.status(500).end();

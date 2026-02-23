@@ -37,17 +37,44 @@ export default function TravelInformation() {
 
       <div className="card">
         <h2 className="sectionLabel">Typical phrases</h2>
-        <p style={{ margin: '0 0 12px 0', color: '#5c5c5c', fontSize: 14 }}>A few useful phrases in Greek:</p>
-        <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.8 }}>
-          <li><strong>Hello / Goodbye</strong> — Γεια σας (Yia sas)</li>
-          <li><strong>Please</strong> — Παρακαλώ (Parakaló)</li>
-          <li><strong>Thank you</strong> — Ευχαριστώ (Efcharistó)</li>
-          <li><strong>Yes / No</strong> — Ναι / Όχι (Neh / Ochi)</li>
-          <li><strong>Excuse me / Sorry</strong> — Συγνώμη (Signómi)</li>
-          <li><strong>How much?</strong> — Πόσο κάνει; (Póso káni?)</li>
-          <li><strong>The bill, please</strong> — Τον λογαριασμό, παρακαλώ (Ton logariasmó, parakaló)</li>
-          <li><strong>Where is the bathroom?</strong> — Πού είναι η τουαλέτα; (Pou eínai i toualéta?)</li>
-          <li><strong>Cheers!</strong> — Γεια μας! (Yia mas!)</li>
+        <p style={{ margin: '0 0 12px 0', color: '#5c5c5c', fontSize: 14 }}>A few useful phrases in Greek with romanization and American phonetic pronunciation:</p>
+        <ul style={{ margin: 0, paddingLeft: 20, lineHeight: 1.9, listStyle: 'none' }}>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Hello / Goodbye</strong> — Γεια σας (Yia sas).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: YAH sahs.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Please</strong> — Παρακαλώ (Parakaló).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: pah-rah-kah-LOH.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Thank you</strong> — Ευχαριστώ (Efcharistó).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: ef-hah-rees-TOH.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Yes / No</strong> — Ναι / Όχι (Neh / Ochi).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: neh / OH-hee.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Excuse me / Sorry</strong> — Συγνώμη (Signómi).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: seeg-NOH-mee.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>How much?</strong> — Πόσο κάνει; (Póso káni?).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: POH-soh KAH-nee.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>The bill, please</strong> — Τον λογαριασμό, παρακαλώ (Ton logariasmó, parakaló).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: tohn loh-gah-ryahz-MOH, pah-rah-kah-LOH.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Where is the bathroom?</strong> — Πού είναι η τουαλέτα; (Pou eínai i toualéta?).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: poo EE-neh ee too-ah-LEH-tah.</span>
+          </li>
+          <li style={{ marginBottom: 14 }}>
+            <strong>Cheers!</strong> — Γεια μας! (Yia mas!).<br />
+            <span style={{ color: '#5c5c5c', fontSize: 13 }}>Pronounced: yah mahs.</span>
+          </li>
         </ul>
       </div>
     </>

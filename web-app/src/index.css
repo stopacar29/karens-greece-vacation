@@ -67,3 +67,9 @@ button { cursor: pointer; }
 .message { padding: 12px; border-radius: 12px; margin-top: 12px; font-size: 14px; }
 .messageSuccess { background: #e8f5e9; color: #1b5e20; }
 .messageError { background: #fde8e8; color: #b71c1c; }
+
+@media print {
+  .nav, .no-print { display: none !important; }
+  .app { padding: 0; max-width: 100%; }
+  .card { box-shadow: none; border: 1px solid #ddd; }
+}

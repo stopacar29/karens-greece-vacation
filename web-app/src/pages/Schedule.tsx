@@ -155,9 +155,14 @@ export default function Schedule() {
 
   return (
     <>
-      <div className="card">
+      <div className="card schedule-print-content">
         <h2 className="sectionLabel">Schedule by day</h2>
         <p className="hint">Flights, hotel check-ins, and activities from the Flights, Hotel / House, and Activities pages appear here when you set their dates.</p>
+        <div className="no-print" style={{ marginBottom: 16 }}>
+          <button type="button" className="btn btnPrimary" onClick={() => window.print()} aria-label="Print schedule">
+            Print schedule
+          </button>
+        </div>
         {dateKeys.length === 0 ? (
           <p style={{ color: '#5c5c5c' }}>Add a departure date (Flights), a check-in date (Hotel / House), or an activity date (Activities), to see days here.</p>
         ) : (
@@ -176,6 +181,11 @@ export default function Schedule() {
             );
           })
         )}
+        <div className="no-print" style={{ marginTop: 24 }}>
+          <button type="button" className="btn btnPrimary" onClick={() => window.print()}>
+            Print
+          </button>
+        </div>
       </div>
     </>
   );
