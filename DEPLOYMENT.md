@@ -48,8 +48,8 @@ Render will redeploy; after that, Import will work.
 
 1. In the Render dashboard, open your **Web Service**.
 2. Go to **Settings** → **Disks** (or **Add Disk**).
-3. Add a disk, e.g. **Mount Path:** `/data`, **Size:** 1 GB.
-4. Add an **Environment Variable**: **Key** `DATA_DIR`, **Value** `/data`.
+3. Add a disk, e.g. **Mount Path:** `/data` or `/opt/data` (use whatever path Render shows), **Size:** 1 GB.
+4. Add an **Environment Variable**: **Key** `DATA_DIR`, **Value** the same as the mount path (e.g. `/data` or `/opt/data`).
 5. Redeploy. Trip data and gallery uploads will then be stored on the disk and survive restarts and redeploys.
 
 ---

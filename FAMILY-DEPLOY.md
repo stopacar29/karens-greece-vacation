@@ -53,14 +53,13 @@ Without this, trip data and gallery photos can be lost when the app restarts or 
 2. Go to the **Disks** tab (or **Settings** → **Disks**).
 3. Click **Add Disk**:
    - **Name:** `data` (or any name).
-   - **Mount Path:** `data`  
-     Type exactly: `/data`
+   - **Mount Path:** use the path Render gives you (e.g. `/data` or `/opt/data`).
    - **Size:** `1` GB (enough for trip data and many family photos; about **$0.25/month**).
 4. Click **Save** (or **Add**).
 5. Go to **Environment** (or **Environment Variables**).
-6. Add a variable:
+6. Add a variable (value must match the disk mount path exactly):
    - **Key:** `DATA_DIR`
-   - **Value:** `/data`
+   - **Value:** same as mount path, e.g. `/data` or `/opt/data`
 7. Click **Save Changes**. Render will redeploy the service.
 
 After the redeploy, trip data and gallery uploads are stored on the disk and **persist** across restarts and new deploys.

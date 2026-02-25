@@ -78,7 +78,8 @@ app.get('/api/trip', (req, res) => {
   try {
     const data = readTripData();
     if (data == null) {
-      return res.status(404).json({ message: 'No trip data yet' });
+      // Return empty valid object so client can merge; avoids "no data" confusion when server was reset
+      return res.json({});
     }
     res.json(data);
   } catch (e) {

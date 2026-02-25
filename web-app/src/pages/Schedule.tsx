@@ -159,8 +159,8 @@ export default function Schedule() {
         <h2 className="sectionLabel">Schedule by day</h2>
         <p className="hint">Flights, hotel check-ins, and activities from the Flights, Hotel / House, and Activities pages appear here when you set their dates.</p>
         <div className="no-print" style={{ marginBottom: 16 }}>
-          <button type="button" className="btn btnPrimary" onClick={() => window.print()} aria-label="Print schedule">
-            Print schedule
+          <button type="button" className="btn btnPrimary" onClick={() => window.print()} aria-label="Print Schedule">
+            Print Schedule
           </button>
         </div>
         {dateKeys.length === 0 ? (
@@ -181,11 +181,6 @@ export default function Schedule() {
             );
           })
         )}
-        <div className="no-print" style={{ marginTop: 24 }}>
-          <button type="button" className="btn btnPrimary" onClick={() => window.print()}>
-            Print
-          </button>
-        </div>
       </div>
     </>
   );
