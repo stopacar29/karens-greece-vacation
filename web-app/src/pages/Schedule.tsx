@@ -194,22 +194,28 @@ function DayBlock({
       {items.length === 0 ? (
         <p style={{ margin: '0 0 10px 0', color: '#5c5c5c', fontSize: 14 }}>No activities yet.</p>
       ) : (
-        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12, fontSize: 14 }}>
+        <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12, fontSize: 14, tableLayout: 'fixed' }}>
+          <colgroup>
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '52%' }} />
+            <col style={{ width: '18%' }} />
+            <col style={{ width: '12%' }} />
+          </colgroup>
           <thead>
             <tr style={{ borderBottom: '1px solid #ddd', textAlign: 'left' }}>
               <th style={{ padding: '6px 8px 6px 0', color: '#5c5c5c', fontWeight: 600 }}>Family</th>
               <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Activity</th>
-              <th style={{ padding: '6px 0 6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Time</th>
-              <th style={{ width: 40 }} />
+              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Time</th>
+              <th style={{ padding: '6px 0 6px 8px', color: '#5c5c5c', fontWeight: 600, width: '12%' }} />
             </tr>
           </thead>
           <tbody>
             {items.map((item, index) => (
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '8px 8px 8px 0', verticalAlign: 'top' }}>{getFamilyName(item.familyId)}</td>
-                <td style={{ padding: 8, verticalAlign: 'top' }}>{item.activity}</td>
-                <td style={{ padding: '8px 0 8px 8px', verticalAlign: 'top' }}>{item.time || '—'}</td>
-                <td style={{ padding: 8, verticalAlign: 'top' }}>
+                <td style={{ padding: '8px 8px 8px 0', verticalAlign: 'top', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getFamilyName(item.familyId)}</td>
+                <td style={{ padding: 8, verticalAlign: 'top', overflow: 'hidden', textOverflow: 'ellipsis', wordBreak: 'break-word' }}>{item.activity}</td>
+                <td style={{ padding: '8px 8px 8px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{item.time || '—'}</td>
+                <td style={{ padding: '8px 0 8px 8px', verticalAlign: 'top', width: '12%' }}>
                   {index < manualCount && (
                     <button
                       type="button"
