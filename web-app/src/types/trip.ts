@@ -43,9 +43,8 @@ export type TripData = {
   flights: Record<string, FlightInfo[]>;
   flightDates: Record<string, { departure: string; return: string }>;
   accommodation: Record<string, string>;
-  /** Per-family list of accommodations (check-in + details). Replaces old string + CheckIn records. */
-  accommodationSantorini: Record<string, AccommodationEntry[]>;
-  accommodationCrete: Record<string, AccommodationEntry[]>;
+  /** Single list of accommodations per family (check-in + details). Replaces Santorini/Crete split. */
+  accommodationList: Record<string, AccommodationEntry[]>;
   /** Activities (dinners, tours, etc.) per family. Show on Schedule by date. */
   activities: Record<string, ActivityItem[]>;
   transfers: Record<string, AirportTransfers>;
@@ -90,8 +89,7 @@ export function defaultTripData(familyIds: string[]): TripData {
     flights: Object.fromEntries(familyIds.map((id) => [id, [emptyFlightInfo()]])),
     flightDates: Object.fromEntries(familyIds.map((id) => [id, { departure: '', return: '' }])),
     accommodation: emptyPerFamily(familyIds),
-    accommodationSantorini: Object.fromEntries(idsWithAll.map((id) => [id, [emptyAccommodationEntry()]])),
-    accommodationCrete: Object.fromEntries(idsWithAll.map((id) => [id, [emptyAccommodationEntry()]])),
+    accommodationList: Object.fromEntries(idsWithAll.map((id) => [id, [emptyAccommodationEntry()]])),
     activities: Object.fromEntries(idsWithAll.map((id) => [id, []])),
     transfers: emptyTransfers(familyIds),
     schedule: DEFAULT_SCHEDULE,
@@ -122,7 +120,7 @@ export function normalizeFlight(v: unknown): FlightInfo {
 
 export const MAX_FLIGHTS_PER_FAMILY = 5;
 
-export const MAX_ACCOMMODATIONS_PER_FAMILY = 5;
+export const MAX_ACCOMMODATIONS_PER_FAMILY = 10;
 
 export function normalizeAccommodationEntry(v: unknown): AccommodationEntry {
   const e = emptyAccommodationEntry();
@@ -134,43 +132,36 @@ export function normalizeAccommodationEntry(v: unknown): AccommodationEntry {
   };
 }
 
-/** Convert parsed (old: Record<string, string> + CheckIn, or new: Record<string, AccommodationEntry[]>) to new shape. */
-export function normalizeAccommodationSantorini(
-  parsed: { accommodationSantorini?: Record<string, unknown>; accommodationSantoriniCheckIn?: Record<string, string> },
+/** Build accommodationList from parsed: use accommodationList if present, else merge old accommodationSantorini + accommodationCrete. */
+export function normalizeAccommodationList(
+  parsed: {
+    accommodationList?: Record<string, unknown>;
+    accommodationSantorini?: Record<string, unknown>;
+    accommodationCrete?: Record<string, unknown>;
+    accommodationSantoriniCheckIn?: Record<string, string>;
+    accommodationCreteCheckIn?: Record<string, string>;
+  },
   familyIds: string[]
 ): Record<string, AccommodationEntry[]> {
   const out: Record<string, AccommodationEntry[]> = {};
-  const raw = parsed.accommodationSantorini;
-  const checkIns = parsed.accommodationSantoriniCheckIn ?? {};
-  for (const id of familyIds) {
-    const val = raw?.[id];
-    if (Array.isArray(val) && val.length > 0) {
-      out[id] = val.slice(0, MAX_ACCOMMODATIONS_PER_FAMILY).map(normalizeAccommodationEntry);
-    } else if (typeof val === 'string') {
-      out[id] = [{ checkIn: checkIns[id] ?? '', details: val }];
-    } else {
-      out[id] = [emptyAccommodationEntry()];
-    }
-  }
-  return out;
-}
+  const list = parsed.accommodationList;
+  const santorini = parsed.accommodationSantorini;
+  const crete = parsed.accommodationCrete;
+  const santoriniCheckIn = parsed.accommodationSantoriniCheckIn ?? {};
+  const creteCheckIn = parsed.accommodationCreteCheckIn ?? {};
 
-export function normalizeAccommodationCrete(
-  parsed: { accommodationCrete?: Record<string, unknown>; accommodationCreteCheckIn?: Record<string, string> },
-  familyIds: string[]
-): Record<string, AccommodationEntry[]> {
-  const out: Record<string, AccommodationEntry[]> = {};
-  const raw = parsed.accommodationCrete;
-  const checkIns = parsed.accommodationCreteCheckIn ?? {};
   for (const id of familyIds) {
-    const val = raw?.[id];
-    if (Array.isArray(val) && val.length > 0) {
-      out[id] = val.slice(0, MAX_ACCOMMODATIONS_PER_FAMILY).map(normalizeAccommodationEntry);
-    } else if (typeof val === 'string') {
-      out[id] = [{ checkIn: checkIns[id] ?? '', details: val }];
-    } else {
-      out[id] = [emptyAccommodationEntry()];
+    const listId = list && typeof list === 'object' ? list[id] : undefined;
+    if (Array.isArray(listId) && listId.length > 0) {
+      out[id] = (listId as AccommodationEntry[]).slice(0, MAX_ACCOMMODATIONS_PER_FAMILY).map(normalizeAccommodationEntry);
+      continue;
     }
+    const sVal = santorini?.[id];
+    const cVal = crete?.[id];
+    const sArr = Array.isArray(sVal) ? (sVal as AccommodationEntry[]).map(normalizeAccommodationEntry) : typeof sVal === 'string' ? [{ checkIn: santoriniCheckIn[id] ?? '', details: sVal }] : [];
+    const cArr = Array.isArray(cVal) ? (cVal as AccommodationEntry[]).map(normalizeAccommodationEntry) : typeof cVal === 'string' ? [{ checkIn: creteCheckIn[id] ?? '', details: cVal }] : [];
+    const merged = [...sArr, ...cArr].slice(0, MAX_ACCOMMODATIONS_PER_FAMILY);
+    out[id] = merged.length ? merged : [emptyAccommodationEntry()];
   }
   return out;
 }

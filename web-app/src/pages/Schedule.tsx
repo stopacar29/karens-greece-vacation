@@ -48,8 +48,7 @@ function normalizeToDateKey(s: string): string | null {
 function getAllDateKeys(tripData: {
   flights: Record<string, { departureDate?: string }[]>;
   dayItems: Record<string, unknown[]>;
-  accommodationSantorini?: Record<string, { checkIn?: string }[]>;
-  accommodationCrete?: Record<string, { checkIn?: string }[]>;
+  accommodationList?: Record<string, { checkIn?: string }[]>;
   activities?: Record<string, { date?: string }[]>;
 }): string[] {
   const set = new Set<string>();
@@ -63,13 +62,7 @@ function getAllDateKeys(tripData: {
     const key = normalizeToDateKey(k) || k;
     if (key) set.add(key);
   });
-  Object.values(tripData.accommodationSantorini || {}).forEach((entries) => {
-    (entries || []).forEach((e) => {
-      const key = normalizeToDateKey(e.checkIn || '');
-      if (key) set.add(key);
-    });
-  });
-  Object.values(tripData.accommodationCrete || {}).forEach((entries) => {
+  Object.values(tripData.accommodationList || {}).forEach((entries) => {
     (entries || []).forEach((e) => {
       const key = normalizeToDateKey(e.checkIn || '');
       if (key) set.add(key);
@@ -117,16 +110,10 @@ export default function Schedule() {
       }
     });
     familyListWithAll.forEach((family) => {
-      const santoriniEntries = tripData.accommodationSantorini?.[family.id] || [];
-      santoriniEntries.forEach((entry) => {
+      const entries = tripData.accommodationList?.[family.id] || [];
+      entries.forEach((entry) => {
         if (normalizeToDateKey(entry.checkIn || '') === dateKey && (entry.details || '').trim()) {
-          items.push({ familyId: family.id, activity: `Hotel (Santorini): ${entry.details.trim()}`, time: '' });
-        }
-      });
-      const creteEntries = tripData.accommodationCrete?.[family.id] || [];
-      creteEntries.forEach((entry) => {
-        if (normalizeToDateKey(entry.checkIn || '') === dateKey && (entry.details || '').trim()) {
-          items.push({ familyId: family.id, activity: `Hotel (Crete): ${entry.details.trim()}`, time: '' });
+          items.push({ familyId: family.id, activity: `Hotel: ${entry.details.trim()}`, time: '' });
         }
       });
       const familyActivities = tripData.activities?.[family.id];

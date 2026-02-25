@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { FAMILIES } from '../constants/families';
 import type { TripData, FlightInfo, DaySchedule, ActivityItem } from '../types/trip';
-import { defaultTripData, normalizeFlight, normalizeActivity, normalizeAccommodationSantorini, normalizeAccommodationCrete } from '../types/trip';
+import { defaultTripData, normalizeFlight, normalizeActivity, normalizeAccommodationList } from '../types/trip';
 
 const STORAGE_KEY = 'karens_greece_trip';
 const TRIP_API = '/api/trip';
@@ -57,12 +57,9 @@ function mergeParsedIntoState(prev: TripData, parsed: Partial<TripData>): TripDa
     })(),
     flightDates: { ...emptyFlightDates(), ...prev.flightDates, ...parsed.flightDates },
     accommodation: { ...emptyPerFamily(), ...prev.accommodation, ...parsed.accommodation },
-    accommodationSantorini: (parsed.accommodationSantorini != null && typeof parsed.accommodationSantorini === 'object') || (parsed as { accommodationSantoriniCheckIn?: Record<string, string> }).accommodationSantoriniCheckIn != null
-      ? { ...prev.accommodationSantorini, ...normalizeAccommodationSantorini(parsed as { accommodationSantorini?: Record<string, unknown>; accommodationSantoriniCheckIn?: Record<string, string> }, idsWithAll) }
-      : prev.accommodationSantorini,
-    accommodationCrete: (parsed.accommodationCrete != null && typeof parsed.accommodationCrete === 'object') || (parsed as { accommodationCreteCheckIn?: Record<string, string> }).accommodationCreteCheckIn != null
-      ? { ...prev.accommodationCrete, ...normalizeAccommodationCrete(parsed as { accommodationCrete?: Record<string, unknown>; accommodationCreteCheckIn?: Record<string, string> }, idsWithAll) }
-      : prev.accommodationCrete,
+    accommodationList: (parsed.accommodationList != null && typeof parsed.accommodationList === 'object') || (parsed as Record<string, unknown>).accommodationSantorini != null || (parsed as Record<string, unknown>).accommodationCrete != null
+      ? { ...prev.accommodationList, ...normalizeAccommodationList(parsed as Parameters<typeof normalizeAccommodationList>[0], idsWithAll) }
+      : prev.accommodationList,
     activities: (() => {
       const base = Object.fromEntries(idsWithAll.map((id) => [id, [] as ActivityItem[]]));
       if (!parsed.activities || typeof parsed.activities !== 'object') return { ...base, ...prev.activities };
@@ -181,17 +178,14 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
           }
           return next;
         })(),
-        accommodationSantorini: (() => {
-          if (partial.accommodationSantorini == null || typeof partial.accommodationSantorini !== 'object') return prev.accommodationSantorini;
-          const first = Object.values(partial.accommodationSantorini)[0];
-          const fromPartial = Array.isArray(first) ? partial.accommodationSantorini : normalizeAccommodationSantorini(partial as { accommodationSantorini?: Record<string, unknown>; accommodationSantoriniCheckIn?: Record<string, string> }, idsWithAll);
-          return { ...prev.accommodationSantorini, ...fromPartial };
-        })(),
-        accommodationCrete: (() => {
-          if (partial.accommodationCrete == null || typeof partial.accommodationCrete !== 'object') return prev.accommodationCrete;
-          const first = Object.values(partial.accommodationCrete)[0];
-          const fromPartial = Array.isArray(first) ? partial.accommodationCrete : normalizeAccommodationCrete(partial as { accommodationCrete?: Record<string, unknown>; accommodationCreteCheckIn?: Record<string, string> }, idsWithAll);
-          return { ...prev.accommodationCrete, ...fromPartial };
+        accommodationList: (() => {
+          if (partial.accommodationList != null && typeof partial.accommodationList === 'object') {
+            return { ...prev.accommodationList, ...partial.accommodationList };
+          }
+          if ((partial as Record<string, unknown>).accommodationSantorini != null || (partial as Record<string, unknown>).accommodationCrete != null) {
+            return { ...prev.accommodationList, ...normalizeAccommodationList(partial as Parameters<typeof normalizeAccommodationList>[0], idsWithAll) };
+          }
+          return prev.accommodationList;
         })(),
         activities: { ...prev.activities, ...(partial.activities ?? {}) },
         transfers: { ...prev.transfers, ...(partial.transfers ?? {}) },
