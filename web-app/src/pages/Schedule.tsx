@@ -48,8 +48,8 @@ function normalizeToDateKey(s: string): string | null {
 function getAllDateKeys(tripData: {
   flights: Record<string, { departureDate?: string }[]>;
   dayItems: Record<string, unknown[]>;
-  accommodationSantoriniCheckIn?: Record<string, string>;
-  accommodationCreteCheckIn?: Record<string, string>;
+  accommodationSantorini?: Record<string, { checkIn?: string }[]>;
+  accommodationCrete?: Record<string, { checkIn?: string }[]>;
   activities?: Record<string, { date?: string }[]>;
 }): string[] {
   const set = new Set<string>();
@@ -63,13 +63,17 @@ function getAllDateKeys(tripData: {
     const key = normalizeToDateKey(k) || k;
     if (key) set.add(key);
   });
-  Object.values(tripData.accommodationSantoriniCheckIn || {}).forEach((v) => {
-    const key = normalizeToDateKey(v || '');
-    if (key) set.add(key);
+  Object.values(tripData.accommodationSantorini || {}).forEach((entries) => {
+    (entries || []).forEach((e) => {
+      const key = normalizeToDateKey(e.checkIn || '');
+      if (key) set.add(key);
+    });
   });
-  Object.values(tripData.accommodationCreteCheckIn || {}).forEach((v) => {
-    const key = normalizeToDateKey(v || '');
-    if (key) set.add(key);
+  Object.values(tripData.accommodationCrete || {}).forEach((entries) => {
+    (entries || []).forEach((e) => {
+      const key = normalizeToDateKey(e.checkIn || '');
+      if (key) set.add(key);
+    });
   });
   Object.values(tripData.activities || {}).forEach((list) => {
     (list || []).forEach((a) => {
@@ -113,20 +117,18 @@ export default function Schedule() {
       }
     });
     familyListWithAll.forEach((family) => {
-      const santoriniCheckIn = tripData.accommodationSantoriniCheckIn?.[family.id];
-      if (santoriniCheckIn && normalizeToDateKey(santoriniCheckIn) === dateKey) {
-        const details = (tripData.accommodationSantorini?.[family.id] || '').trim();
-        if (details) {
-          items.push({ familyId: family.id, activity: `Hotel (Santorini): ${details}`, time: '' });
+      const santoriniEntries = tripData.accommodationSantorini?.[family.id] || [];
+      santoriniEntries.forEach((entry) => {
+        if (normalizeToDateKey(entry.checkIn || '') === dateKey && (entry.details || '').trim()) {
+          items.push({ familyId: family.id, activity: `Hotel (Santorini): ${entry.details.trim()}`, time: '' });
         }
-      }
-      const creteCheckIn = tripData.accommodationCreteCheckIn?.[family.id];
-      if (creteCheckIn && normalizeToDateKey(creteCheckIn) === dateKey) {
-        const details = (tripData.accommodationCrete?.[family.id] || '').trim();
-        if (details) {
-          items.push({ familyId: family.id, activity: `Hotel (Crete): ${details}`, time: '' });
+      });
+      const creteEntries = tripData.accommodationCrete?.[family.id] || [];
+      creteEntries.forEach((entry) => {
+        if (normalizeToDateKey(entry.checkIn || '') === dateKey && (entry.details || '').trim()) {
+          items.push({ familyId: family.id, activity: `Hotel (Crete): ${entry.details.trim()}`, time: '' });
         }
-      }
+      });
       const familyActivities = tripData.activities?.[family.id];
       if (Array.isArray(familyActivities)) {
         familyActivities.forEach((act) => {
