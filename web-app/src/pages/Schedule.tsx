@@ -1,7 +1,8 @@
 import { useTrip } from '../context/TripContext';
-import { FAMILIES } from '../constants/families';
+import { FAMILIES, ACTIVITY_PARTIES, partyName } from '../constants/families';
 import type { DayItem } from '../types/trip';
 import { normalizeFlight } from '../types/trip';
+import ConfirmDeleteButton from '../components/ConfirmDeleteButton';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -79,13 +80,13 @@ function getAllDateKeys(tripData: {
 
 export default function Schedule() {
   const { tripData, updateTrip } = useTrip();
-  const familyList = tripData.families?.length ? tripData.families : FAMILIES;
+  const familyList = FAMILIES;
   const dayItems = tripData.dayItems ?? {};
 
   const dateKeys = getAllDateKeys(tripData);
 
-  /** Families plus "All" for accommodation and activities. */
-  const familyListWithAll = [{ id: 'all', name: 'All' }, ...familyList];
+  /** Reservation parties: "Everyone", "Adults only", plus each family. */
+  const familyListWithAll = ACTIVITY_PARTIES;
 
   /** Activities for a day: manual dayItems + flights + accommodation check-ins + activities. */
   function getItemsForDay(dateKey: string): DayItem[] {
@@ -104,6 +105,7 @@ export default function Schedule() {
               familyId: family.id,
               activity: route ? `${desc} ${route}` : desc,
               time: fl.departureTime || '—',
+              arrival: fl.arrivalTime || '',
             });
           }
         });
@@ -140,7 +142,7 @@ export default function Schedule() {
     updateTrip({ dayItems: { ...dayItems, [dateKey]: list } });
   };
 
-  const getFamilyName = (familyId: string) => (familyId === 'all' ? 'All' : familyList.find((f) => f.id === familyId)?.name ?? familyId);
+  const getFamilyName = (familyId: string) => partyName(familyId);
 
   return (
     <>
@@ -196,16 +198,18 @@ function DayBlock({
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12, fontSize: 14, tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '18%' }} />
-            <col style={{ width: '52%' }} />
-            <col style={{ width: '18%' }} />
+            <col style={{ width: '16%' }} />
+            <col style={{ width: '42%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '15%' }} />
             <col style={{ width: '12%' }} />
           </colgroup>
           <thead>
             <tr style={{ borderBottom: '1px solid #ddd', textAlign: 'left' }}>
               <th style={{ padding: '6px 8px 6px 0', color: '#5c5c5c', fontWeight: 600 }}>Family</th>
               <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Activity</th>
-              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Time</th>
+              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Departs</th>
+              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Arrival</th>
               <th style={{ padding: '6px 0 6px 8px', color: '#5c5c5c', fontWeight: 600, width: '12%' }} />
             </tr>
           </thead>
@@ -214,16 +218,11 @@ function DayBlock({
               <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '8px 8px 8px 0', verticalAlign: 'top', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getFamilyName(item.familyId)}</td>
                 <td style={{ padding: 8, verticalAlign: 'top', overflow: 'hidden', textOverflow: 'ellipsis', wordBreak: 'break-word' }}>{item.activity}</td>
-                <td style={{ padding: '8px 8px 8px 8px', verticalAlign: 'top', whiteSpace: 'nowrap' }}>{item.time || '—'}</td>
+                <td style={{ padding: '8px 8px 8px 8px', verticalAlign: 'top' }}>{item.time || '—'}</td>
+                <td style={{ padding: '8px 8px 8px 8px', verticalAlign: 'top' }}>{item.arrival || '—'}</td>
                 <td style={{ padding: '8px 0 8px 8px', verticalAlign: 'top', width: '12%' }}>
                   {index < manualCount && (
-                    <button
-                      type="button"
-                      onClick={() => onRemove(index)}
-                      style={{ background: 'none', border: 'none', color: '#b71c1c', cursor: 'pointer', fontSize: 13 }}
-                    >
-                      Remove
-                    </button>
+                    <ConfirmDeleteButton small label="Remove" onConfirm={() => onRemove(index)} />
                   )}
                 </td>
               </tr>

@@ -3,6 +3,7 @@ import { FAMILIES } from '../constants/families';
 import type { FlightInfo } from '../types/trip';
 import { normalizeFlight, MAX_FLIGHTS_PER_FAMILY } from '../types/trip';
 import MonthDaySelect from '../components/MonthDaySelect';
+import ConfirmDeleteButton from '../components/ConfirmDeleteButton';
 
 function emptyFlight(): FlightInfo {
   return { departureDate: '', airline: '', flightNumber: '', departureAirport: '', departureTime: '', arrivalAirport: '', arrivalTime: '' };
@@ -10,7 +11,7 @@ function emptyFlight(): FlightInfo {
 
 export default function Flights() {
   const { tripData, updateTrip } = useTrip();
-  const familyList = tripData.families?.length ? tripData.families : FAMILIES;
+  const familyList = FAMILIES;
 
   const getFlightsForFamily = (familyId: string): FlightInfo[] => {
     const raw = tripData.flights[familyId];
@@ -85,7 +86,7 @@ export default function Flights() {
                   {index === flights.length - 1 && flights.length < MAX_FLIGHTS_PER_FAMILY && (
                     <button type="button" className="btn btnSecondary" onClick={() => addNextFlight(family.id)}>Next Flight</button>
                   )}
-                  <button type="button" className="secondary" onClick={() => removeFlight(family.id, index)} style={{ color: '#a00' }}>Delete</button>
+                  <ConfirmDeleteButton label="Delete flight" onConfirm={() => removeFlight(family.id, index)} />
                 </div>
               </div>
             ))}

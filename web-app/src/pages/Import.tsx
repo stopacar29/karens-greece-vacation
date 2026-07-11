@@ -2,7 +2,7 @@ import { useState, useCallback } from 'react';
 import { useTrip } from '../context/TripContext';
 import type { TripData } from '../types/trip';
 import { FAMILIES } from '../constants/families';
-import { normalizeFlight } from '../types/trip';
+import { normalizeFlight, MAX_FLIGHTS_PER_FAMILY } from '../types/trip';
 
 /** Ensure flights is Record<string, FlightInfo[]> for mergeFromImport. */
 function normalizeParsedFlights(partial: Partial<TripData> & { flights?: Record<string, unknown> }): Partial<TripData> {
@@ -10,7 +10,7 @@ function normalizeParsedFlights(partial: Partial<TripData> & { flights?: Record<
   const out: Record<string, import('../types/trip').FlightInfo[]> = {};
   for (const id of Object.keys(partial.flights)) {
     const v = partial.flights[id];
-    out[id] = Array.isArray(v) ? v.slice(0, 5).map(normalizeFlight) : [normalizeFlight(v)];
+    out[id] = Array.isArray(v) ? v.slice(0, MAX_FLIGHTS_PER_FAMILY).map(normalizeFlight) : [normalizeFlight(v)];
   }
   return { ...partial, flights: out };
 }
@@ -188,7 +188,7 @@ export default function Import() {
       <div className="card">
         <h2 className="sectionLabel">Import from PDF or image</h2>
         <p className="hint">
-          Choose a file or paste one into the box below. The server will extract text and fill trip data (Schedule, Travel). Make sure the backend is running on port 3000.
+          Choose a file or paste one into the box below. Claude reads it and fills in trip data (flights, hotels, activities) automatically.
         </p>
 
         <div className="inputRow">

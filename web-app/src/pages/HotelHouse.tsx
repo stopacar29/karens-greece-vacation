@@ -1,10 +1,9 @@
 import { useTrip } from '../context/TripContext';
-import { FAMILIES } from '../constants/families';
+import { PARTIES, TOTAL_TRAVELERS } from '../constants/families';
 import MonthDaySelect from '../components/MonthDaySelect';
+import ConfirmDeleteButton from '../components/ConfirmDeleteButton';
 import type { AccommodationEntry } from '../types/trip';
 import { MAX_ACCOMMODATIONS_PER_FAMILY } from '../types/trip';
-
-const ALL_FAMILY = { id: 'all', name: 'All' } as const;
 
 function emptyEntry(): AccommodationEntry {
   return { checkIn: '', details: '' };
@@ -12,8 +11,7 @@ function emptyEntry(): AccommodationEntry {
 
 export default function HotelHouse() {
   const { tripData, updateTrip } = useTrip();
-  const familyList = tripData.families?.length ? tripData.families : FAMILIES;
-  const allFamilyList = [ALL_FAMILY, ...familyList];
+  const allFamilyList = PARTIES;
 
   const getEntries = (familyId: string): AccommodationEntry[] => {
     const raw = tripData.accommodationList?.[familyId];
@@ -47,7 +45,7 @@ export default function HotelHouse() {
   return (
     <div className="card">
       <h2 className="sectionLabel">Hotel / House</h2>
-      <p className="hint">One entry area per family. Add up to {MAX_ACCOMMODATIONS_PER_FAMILY} accommodations per family. First option &quot;All&quot; applies to everyone. Entries appear on the Schedule page on the check-in date.</p>
+      <p className="hint">One entry area per group. Add up to {MAX_ACCOMMODATIONS_PER_FAMILY} accommodations per group. &quot;Everyone&quot; means all {TOTAL_TRAVELERS} of us. Entries appear on the Schedule page on the check-in date and stay saved until you delete them.</p>
 
       {allFamilyList.map((family) => {
         const entries = getEntries(family.id);
@@ -74,9 +72,7 @@ export default function HotelHouse() {
                       Next Hotel / House
                     </button>
                   )}
-                  <button type="button" className="secondary" onClick={() => removeEntry(family.id, index)} style={{ color: '#a00' }}>
-                    Delete
-                  </button>
+                  <ConfirmDeleteButton label="Delete entry" onConfirm={() => removeEntry(family.id, index)} />
                 </div>
               </div>
             ))}

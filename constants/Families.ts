@@ -13,10 +13,10 @@ export type Family = {
 export const FAMILIES: Family[] = [
   {
     id: 'paul-karen',
-    name: 'Paul and Karen',
+    name: 'Grammy and Papa',
     members: [
-      { name: 'Paul', note: 'Grandpa' },
-      { name: 'Karen', note: 'Grandma · Birthday girl' },
+      { name: 'Papa' },
+      { name: 'Grammy', note: 'Birthday Girl' },
     ],
   },
   {
@@ -27,7 +27,7 @@ export const FAMILIES: Family[] = [
       { name: 'Allison' },
       { name: 'Cohen', note: 'oldest' },
       { name: 'Keane', note: 'boy' },
-      { name: 'Wyatt', note: 'boy' },
+      { name: 'Rambo', note: 'boy' },
       { name: 'Caroline', note: 'daughter' },
     ],
   },

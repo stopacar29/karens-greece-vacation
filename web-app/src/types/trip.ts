@@ -26,8 +26,8 @@ export type ActivityItem = {
   notes: string;
 };
 
-/** One activity on a specific day: family, description, time. */
-export type DayItem = { familyId: string; activity: string; time: string };
+/** One activity on a specific day: family, description, departure time, and (for flights) arrival time. */
+export type DayItem = { familyId: string; activity: string; time: string; arrival?: string };
 
 export type DaySchedule = {
   location: string;
@@ -81,7 +81,7 @@ export const DEFAULT_SCHEDULE: ScheduleEvent[] = [
 ];
 
 export function defaultTripData(familyIds: string[]): TripData {
-  const idsWithAll = ['all', ...familyIds];
+  const idsWithAll = ['all', 'adults', ...familyIds];
   return {
     families: undefined,
     tripStartDate: '07/09',
@@ -118,7 +118,7 @@ export function normalizeFlight(v: unknown): FlightInfo {
   return e;
 }
 
-export const MAX_FLIGHTS_PER_FAMILY = 5;
+export const MAX_FLIGHTS_PER_FAMILY = 10;
 
 export const MAX_ACCOMMODATIONS_PER_FAMILY = 10;
 

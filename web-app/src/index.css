@@ -26,10 +26,14 @@ button { cursor: pointer; }
   border-bottom: 1px solid #e0e0e0;
 }
 .nav a {
-  padding: 8px 14px;
+  padding: 10px 14px;
   border-radius: 8px;
   background: #1a4d6d;
   color: #fff;
+  /* comfortable touch target on phones */
+  min-height: 40px;
+  display: inline-flex;
+  align-items: center;
 }
 .nav a:hover { background: #2d6b8f; text-decoration: none; }
 .nav a.active { background: #c9a227; color: #2c2c2c; }
@@ -45,12 +49,17 @@ button { cursor: pointer; }
 .hint { font-size: 13px; color: #5c5c5c; margin: 0 0 12px 0; }
 .inputRow { margin-bottom: 12px; }
 .inputRow label { display: block; font-size: 14px; font-weight: 500; color: #1a4d6d; margin-bottom: 4px; }
-.inputRow input, .inputRow textarea {
+.inputRow input, .inputRow textarea, .inputRow select {
   width: 100%;
-  padding: 10px 12px;
+  padding: 12px;
   border: 1px solid #ddd;
   border-radius: 8px;
-  font-size: 14px;
+  /* 16px minimum so iPhones don't auto-zoom when a field is tapped */
+  font-size: 16px;
+}
+.inputRow input:focus, .inputRow textarea:focus, .inputRow select:focus {
+  outline: 2px solid #2d6b8f;
+  outline-offset: 1px;
 }
 .inputRow textarea { min-height: 80px; resize: vertical; }
 .btn {
@@ -69,6 +78,21 @@ button { cursor: pointer; }
 .message { padding: 12px; border-radius: 12px; margin-top: 12px; font-size: 14px; }
 .messageSuccess { background: #e8f5e9; color: #1b5e20; }
 .messageError { background: #fde8e8; color: #b71c1c; }
+
+button.secondary {
+  min-height: 40px;
+}
+
+/* Phone-friendly layout (iPhone / Android) */
+@media (max-width: 600px) {
+  .app { padding: 12px; padding-bottom: 40px; }
+  .card { padding: 16px; border-radius: 12px; margin-bottom: 16px; }
+  .nav { gap: 6px; padding-bottom: 12px; margin-bottom: 16px; }
+  .nav a { padding: 10px 12px; font-size: 14px; }
+  .btn { width: auto; padding: 12px 16px; }
+  .hero { margin: -12px -12px 16px -12px !important; min-height: 200px !important; }
+  table { font-size: 13px !important; }
+}
 
 @media print {
   .nav, .no-print { display: none !important; }

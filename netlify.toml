@@ -1,8 +1,18 @@
+# Netlify deployment for Karen's Greece 70th trip site.
+# - The React app (web-app/) is built and published as a static site.
+# - /api/trip and /api/gallery run as Netlify Functions backed by Netlify
+#   Blobs, so everyone shares the same data and it persists until
+#   intentionally deleted (works on the free tier, no extra services).
+
 [build]
   base = "web-app"
   command = "npm install && npm run build"
   publish = "dist"
 
+[functions]
+  directory = "netlify/functions"
+
+# Single-page app: let React Router handle all non-API, non-file routes.
 [[redirects]]
   from = "/*"
   to = "/index.html"

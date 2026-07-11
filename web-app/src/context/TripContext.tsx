@@ -1,12 +1,12 @@
 import React, { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { FAMILIES } from '../constants/families';
 import type { TripData, FlightInfo, DaySchedule, ActivityItem } from '../types/trip';
-import { defaultTripData, normalizeFlight, normalizeActivity, normalizeAccommodationList } from '../types/trip';
+import { defaultTripData, normalizeFlight, normalizeActivity, normalizeAccommodationList, MAX_FLIGHTS_PER_FAMILY } from '../types/trip';
 
 const STORAGE_KEY = 'karens_greece_trip';
 const TRIP_API = '/api/trip';
 const ids = FAMILIES.map((f) => f.id);
-const idsWithAll = ['all', ...ids];
+const idsWithAll = ['all', 'adults', ...ids];
 const SAVE_DEBOUNCE_MS = 300;
 
 function emptyFlights(): Record<string, FlightInfo[]> {
@@ -36,7 +36,10 @@ const defaultData: TripData = {
 /** Merge parsed (from API or localStorage) into existing state; used for load. */
 function mergeParsedIntoState(prev: TripData, parsed: Partial<TripData>): TripData {
   return {
-    families: parsed.families?.length ? parsed.families : prev.families,
+    // Roster is code-defined (constants/families.ts) so name fixes always win
+    // over older saved data. Design goal: data persists, but the family list
+    // itself is not user data.
+    families: FAMILIES,
     tripStartDate: parsed.tripStartDate ?? prev.tripStartDate,
     tripEndDate: parsed.tripEndDate ?? prev.tripEndDate,
     flights: (() => {
@@ -46,7 +49,7 @@ function mergeParsedIntoState(prev: TripData, parsed: Partial<TripData>): TripDa
       for (const id of ids) {
         const raw = (parsed.flights as Record<string, unknown>)[id];
         if (Array.isArray(raw) && raw.length > 0) {
-          out[id] = raw.slice(0, 5).map((f) => normalizeFlight(f));
+          out[id] = raw.slice(0, MAX_FLIGHTS_PER_FAMILY).map((f) => normalizeFlight(f));
         } else if (raw != null) {
           out[id] = [normalizeFlight(raw)];
         } else if (prev.flights[id]) {
@@ -174,7 +177,7 @@ export function TripProvider({ children }: { children: React.ReactNode }) {
           const from = partial.flights ?? {};
           for (const id of Object.keys(from)) {
             const v = from[id];
-            next[id] = Array.isArray(v) ? v.slice(0, 5).map(normalizeFlight) : [normalizeFlight(v)];
+            next[id] = Array.isArray(v) ? v.slice(0, MAX_FLIGHTS_PER_FAMILY).map(normalizeFlight) : [normalizeFlight(v)];
           }
           return next;
         })(),

@@ -7,6 +7,7 @@ import Travel from './pages/Travel';
 import Guests from './pages/Guests';
 import FamilyGallery from './pages/FamilyGallery';
 import TravelInformation from './pages/TravelInformation';
+import Map from './pages/Map';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
         <NavLink to="/activities" className={({ isActive }) => (isActive ? 'active' : '')}>Activities</NavLink>
         <NavLink to="/family-gallery" className={({ isActive }) => (isActive ? 'active' : '')}>Family Gallery</NavLink>
         <NavLink to="/travel-information" className={({ isActive }) => (isActive ? 'active' : '')}>Travel Information</NavLink>
+        <NavLink to="/map" className={({ isActive }) => (isActive ? 'active' : '')}>Map</NavLink>
         <NavLink to="/guests" className={({ isActive }) => (isActive ? 'active' : '')}>Guests</NavLink>
       </nav>
       <Routes>
@@ -30,6 +32,7 @@ export default function App() {
         <Route path="/travel" element={<Navigate to="/activities" replace />} />
         <Route path="/family-gallery" element={<FamilyGallery />} />
         <Route path="/travel-information" element={<TravelInformation />} />
+        <Route path="/map" element={<Map />} />
         <Route path="/guests" element={<Guests />} />
       </Routes>
     </div>

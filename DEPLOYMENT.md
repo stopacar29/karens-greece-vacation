@@ -1,82 +1,36 @@
-# Deploy so family can open one URL
+# Deployment — Netlify (everything in one place)
 
-Trip data is stored on the server (`server/data/trip.json`). Once deployed, everyone uses the **same URL** and sees the same data.
+The site deploys entirely to **Netlify**: static site + Functions (trip data, gallery, AI) + Blobs storage. No Render, no OpenAI — one `ANTHROPIC_API_KEY` powers PDF/photo import and map suggestions.
 
-**→ For a step-by-step, copy-paste deploy with data + pictures saved and low cost, see [FAMILY-DEPLOY.md](./FAMILY-DEPLOY.md).**
+> The old Render deployment (`render.yaml`) is retired. These steps replace it (and the older FAMILY-DEPLOY.md / HOSTING-VENDORS.md guides).
 
----
+## One-time setup
 
-## Option 1: Deploy to Render (one URL, ~5 minutes)
+1. **Push the repo to GitHub** (private repo is fine).
+2. **Create the Netlify site**: at [app.netlify.com](https://app.netlify.com) → *Add new site* → *Import an existing project* → pick the GitHub repo. All build settings come from `netlify.toml` automatically (base `web-app`, publish `dist`, functions `web-app/netlify/functions`).
+3. **Add the API key**: Site settings → *Environment variables* → add `ANTHROPIC_API_KEY` with your key (same value as in your local `.env`).
+4. **Deploy** — Netlify builds and gives you a URL like `https://karens-70th.netlify.app`. You can rename the site for a nicer URL.
 
-Render’s free tier gives you a URL like **https://karens-greece-trip.onrender.com** so family can open it in a browser with no setup.
+## Seed the data (first deploy only)
 
-### Steps
+The production store starts empty. On your Mac with the app running locally (`./run-local.sh`):
 
-1. **Push this project to GitHub** (if it isn’t already).
-   - Create a repo at https://github.com/new and push your code.
+1. Open http://localhost:3000, go to **Home → Export backup (JSON)** and save the file.
+2. Open the new Netlify URL, go to **Home → Restore from file**, and choose that backup.
 
-2. **Sign up at https://render.com** (free account).
+That writes everything into Netlify Blobs and every family member sees it from then on.
 
-3. **Create a Web Service**
-   - Dashboard → **New +** → **Web Service**.
-   - Connect your **GitHub** account and select the repo that contains this project.
-   - Render will detect the `render.yaml` in the repo and use it. If it doesn’t, set:
-     - **Build command:**  
-       `cd web-app && npm ci && npm run build && cd ../server && npm ci`
-     - **Start command:**  
-       `cd server && node index.js`
-   - Click **Create Web Service**.
+## Where production data lives
 
-4. **Wait for the first deploy** (a few minutes). When it’s done, open the URL Render shows (e.g. `https://karens-greece-trip.onrender.com`).
+- Trip data: Netlify Blobs, store `karens-trip` (written by the `/api/trip` function).
+- Photos: Netlify Blobs, store `karens-gallery`.
+- Each visitor's browser also keeps a localStorage copy for offline use.
+- Data persists across every deploy and restart — it only changes when someone edits it (design goal #1).
 
-5. **Share that URL** with family. They can open it on any device and use the app.
+## Updating the live site
 
-### Optional: PDF/OCR import
+Push to the GitHub repo's main branch — Netlify rebuilds and deploys automatically. Data is untouched by deploys.
 
-To use **Import** with PDFs/images, add your OpenAI key in Render:
+## Local development
 
-- Your service → **Environment** → **Add Environment Variable**
-- Key: `OPENAI_API_KEY`, Value: your key → **Save**.  
-Render will redeploy; after that, Import will work.
-
-### Note about free tier
-
-- The app URL may “spin up” after a short idle; the first open can take 30–60 seconds.
-- **Data persistence:** On the free tier, the server’s disk is **ephemeral** — trip data and gallery photos can be lost when the service restarts or redeploys. To keep data across restarts, use a **persistent disk** (see below).
-
-### Keeping data across restarts (persistent disk on Render)
-
-1. In the Render dashboard, open your **Web Service**.
-2. Go to **Settings** → **Disks** (or **Add Disk**).
-3. Add a disk, e.g. **Mount Path:** `/data` or `/opt/data` (use whatever path Render shows), **Size:** 1 GB.
-4. Add an **Environment Variable**: **Key** `DATA_DIR`, **Value** the same as the mount path (e.g. `/data` or `/opt/data`).
-5. Redeploy. Trip data and gallery uploads will then be stored on the disk and survive restarts and redeploys.
-
----
-
-## Option 2: Run on your computer (same Wi‑Fi)
-
-1. **Build and start**
-   ```bash
-   npm run serve
-   ```
-2. Open **http://localhost:3000** on your machine.
-3. On the same Wi‑Fi, others can use **http://YOUR_IP:3000** (e.g. `http://192.168.1.10:3000`). Find your IP in System Settings → Network.
-
----
-
-## Option 3: Other hosts (Railway, Fly.io, etc.)
-
-- **Build:** Install and build the web app, then install server deps, e.g.  
-  `cd web-app && npm ci && npm run build && cd ../server && npm ci`
-- **Start:** Run the server from repo root context so it can see `web-app/dist` and `server/data`, e.g.  
-  `cd server && node index.js`
-- Set **OPENAI_API_KEY** in the host’s environment if you want PDF/OCR import.
-
----
-
-## Checklist before sharing the URL
-
-- [ ] Deploy finished and the app URL opens.
-- [ ] You can add a flight or activity and refresh — data is still there.
-- [ ] (Optional) OPENAI_API_KEY set in the host if you use Import.
+`./run-local.sh` (or `server` + `web-app` dev servers separately, see README). Locally, data lives in `server/data/` on your Mac; the same `ANTHROPIC_API_KEY` in `.env` powers the AI features.

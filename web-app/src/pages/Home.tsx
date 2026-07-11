@@ -33,17 +33,18 @@ export default function Home() {
       <div className="card">
         <h2 className="sectionLabel">Welcome</h2>
         <p style={{ margin: 0, lineHeight: 1.5 }}>
-          Everything you need for our family trip: schedule, travel details, and the guest list. Use the tabs above to explore.
+          Everything you need for our family trip — Athens, Santorini, Crete, London, Istanbul, Cappadocia, and Ephesus: schedule, travel details, and the guest list. Use the tabs above to explore.
         </p>
       </div>
       <div className="card">
         <h3 style={{ margin: '0 0 8px 0', fontSize: 14, color: '#5c5c5c' }}>Quick links</h3>
         <p style={{ margin: '4px 0' }}><Link to="/schedule" style={{ color: '#1a4d6d', textDecoration: 'none' }}>📅 Schedule</Link> — calendar &amp; daily plans</p>
         <p style={{ margin: '4px 0' }}><Link to="/flights" style={{ color: '#1a4d6d', textDecoration: 'none' }}>✈️ Flights</Link> — flight details by family</p>
-        <p style={{ margin: '4px 0' }}><Link to="/hotel-house" style={{ color: '#1a4d6d', textDecoration: 'none' }}>🏨 Hotel / House</Link> — Santorini &amp; Crete accommodation</p>
+        <p style={{ margin: '4px 0' }}><Link to="/hotel-house" style={{ color: '#1a4d6d', textDecoration: 'none' }}>🏨 Hotel / House</Link> — where we&apos;re staying at every stop</p>
         <p style={{ margin: '4px 0' }}><Link to="/activities" style={{ color: '#1a4d6d', textDecoration: 'none' }}>📌 Activities</Link> — dinners, tours, transfers, important numbers</p>
         <p style={{ margin: '4px 0' }}><Link to="/family-gallery" style={{ color: '#1a4d6d', textDecoration: 'none' }}>🖼️ Family Gallery</Link> — upload and view trip photos</p>
         <p style={{ margin: '4px 0' }}><Link to="/travel-information" style={{ color: '#1a4d6d', textDecoration: 'none' }}>ℹ️ Travel Information</Link> — tipping, outlets, Greek phrases</p>
+        <p style={{ margin: '4px 0' }}><Link to="/map" style={{ color: '#1a4d6d', textDecoration: 'none' }}>🗺️ Map</Link> — interactive map with AI suggestions</p>
         <p style={{ margin: '4px 0' }}><Link to="/guests" style={{ color: '#1a4d6d', textDecoration: 'none' }}>👨‍👩‍👧‍👦 Guests</Link> — who&apos;s coming</p>
       </div>
     </>

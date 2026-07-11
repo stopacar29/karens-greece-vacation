@@ -1,18 +1,20 @@
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+
 /**
- * PDF parser and trip data API for Karen's Greece trip app.
- * - GET /trip  -> load trip data (JSON file)
- * - PUT /trip  -> save trip data (JSON body)
- * - POST /parse, POST /ocr -> PDF/image extraction
+ * Trip data API + AI import for Karen's trip app (local development server).
+ * - GET/PUT /api/trip -> load/save trip data (JSON file)
+ * - POST /api/parse, /api/ocr -> PDF/image extraction via Claude
+ * - POST /api/suggestions -> map suggestions via Claude
  *
- * Set OPENAI_API_KEY for best results. Trip data is stored in server/data/trip.json.
+ * Set ANTHROPIC_API_KEY (in ../.env) for the AI features.
+ * Trip data is stored in server/data/trip.json.
+ * In production these same endpoints run as Netlify Functions.
  */
 const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
 const multer = require('multer');
-const pdf = require('pdf-parse');
-const OpenAI = require('openai').default;
 
 const app = express();
 app.use(cors());
@@ -158,174 +160,140 @@ app.get('/api/gallery/images/:filename', (req, res) => {
   }
 });
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
-const openai = OPENAI_API_KEY ? new OpenAI({ apiKey: OPENAI_API_KEY }) : null;
+// --- Claude AI suggestions for map locations ---
+const Anthropic = require('@anthropic-ai/sdk');
+const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
+const anthropic = ANTHROPIC_API_KEY ? new Anthropic.default({ apiKey: ANTHROPIC_API_KEY }) : null;
+
+app.post('/suggestions', async (req, res) => {
+  req.url = '/api/suggestions';
+  return app._router.handle(req, res, () => {});
+});
+
+app.post('/api/suggestions', async (req, res) => {
+  try {
+    const { location, lat, lng } = req.body || {};
+    if (!location) return res.status(400).json({ error: 'Missing location name' });
+    if (!anthropic) return res.status(500).json({ error: 'ANTHROPIC_API_KEY not set on server' });
+
+    const message = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 1024,
+      messages: [{
+        role: 'user',
+        content: `You are a travel guide for a family vacation in July/August 2026 visiting Athens, Santorini, Crete, London, Istanbul, Cappadocia, and Ephesus. The group includes grandparents, parents, and children ages roughly 3-15.
+
+Give me 6-8 suggestions of things to do at or near "${location}" (coordinates: ${lat}, ${lng}). For each suggestion include:
+- Name of the activity/place
+- A one-sentence description
+- Who it's best for (e.g. "great for kids", "romantic for couples", "everyone")
+- Approximate cost (free, $, $$, $$$)
+
+Format as JSON array: [{"name": "...", "description": "...", "bestFor": "...", "cost": "..."}]
+Return only valid JSON, no markdown.`
+      }],
+    });
+
+    const text = message.content[0]?.text?.trim();
+    const suggestions = JSON.parse(text);
+    res.json({ location, suggestions });
+  } catch (e) {
+    console.error('Suggestions error:', e);
+    res.status(500).json({ error: e?.message || 'Failed to get suggestions' });
+  }
+});
 
 const TRIP_DATA_SCHEMA = `
 Return valid JSON only, no markdown. Use this exact shape (use empty strings or empty arrays where you have no data):
 {
   "tripStartDate": "",
   "tripEndDate": "",
-  "flights": { "paul-karen": "", "lance-allison": "", "leah-brent": "", "noah-cori": "" },
-  "accommodationSantorini": { "paul-karen": "", "lance-allison": "", "leah-brent": "", "noah-cori": "" },
-  "accommodationCrete": { "paul-karen": "", "lance-allison": "", "leah-brent": "", "noah-cori": "" },
+  "flights": { "paul-karen": [], "lance-allison": [], "leah-brent": [], "noah-cori": [] },
+  "accommodationList": { "all": [], "paul-karen": [], "lance-allison": [], "leah-brent": [], "noah-cori": [] },
+  "activities": { "all": [], "adults": [], "paul-karen": [], "lance-allison": [], "leah-brent": [], "noah-cori": [] },
   "transfers": {
     "paul-karen": { "toAirport": "", "fromAirport": "" },
     "lance-allison": { "toAirport": "", "fromAirport": "" },
     "leah-brent": { "toAirport": "", "fromAirport": "" },
     "noah-cori": { "toAirport": "", "fromAirport": "" }
   },
-  "schedule": [ { "day": "", "time": "", "title": "", "note": "" } ],
   "gettingAround": "",
   "importantNumbers": ""
 }
-Family ids: paul-karen, lance-allison, leah-brent, noah-cori. The trip has two main stays: Santorini and Crete. Put each family's accommodation in Santorini in accommodationSantorini and in Crete in accommodationCrete. Extract trip dates as YYYY-MM-DD if present.`;
+Family ids: paul-karen (Grammy and Papa), lance-allison, leah-brent, noah-cori. Use "all" for things that apply to everyone and "adults" for adults-only activities.
+Each flight: { "departureDate": "MM-DD", "airline": "", "flightNumber": "", "departureAirport": "XXX", "departureTime": "", "arrivalAirport": "XXX", "arrivalTime": "" }.
+Each accommodation entry: { "checkIn": "MM-DD", "details": "" }.
+Each activity: { "activity": "", "date": "MM-DD", "time": "", "dressCode": "", "notes": "" }.
+Dates are month-day only in "MM-DD" form (e.g. "07-19").`;
 
-async function extractTextFromPdf(buffer) {
-  const data = await pdf(buffer);
-  return data.text;
-}
-
-async function parseWithOpenAI(text) {
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: `You extract trip information from text and return only valid JSON matching the given schema. ${TRIP_DATA_SCHEMA}`,
-      },
-      {
-        role: 'user',
-        content: `Extract trip data from this text:\n\n${text.slice(0, 12000)}`,
-      },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.1,
+/** Ask Claude and parse the JSON it returns (strips ``` fences if present). */
+async function askClaudeJson(content) {
+  if (!anthropic) throw new Error('ANTHROPIC_API_KEY is not set. Add it to .env and restart the server.');
+  const message = await anthropic.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 2048,
+    messages: [{ role: 'user', content }],
   });
-  const content = response.choices[0]?.message?.content?.trim();
-  if (!content) throw new Error('No response from OpenAI');
-  return JSON.parse(content);
+  const text = message.content?.find((b) => b.type === 'text')?.text?.trim();
+  if (!text) throw new Error('Empty response from Claude');
+  const cleaned = text.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim();
+  return JSON.parse(cleaned);
 }
 
-function emptyTripData() {
-  const ids = ['paul-karen', 'lance-allison', 'leah-brent', 'noah-cori'];
-  return {
-    tripStartDate: '',
-    tripEndDate: '',
-    flights: Object.fromEntries(ids.map((id) => [id, ''])),
-    accommodationSantorini: Object.fromEntries(ids.map((id) => [id, ''])),
-    accommodationCrete: Object.fromEntries(ids.map((id) => [id, ''])),
-    transfers: Object.fromEntries(ids.map((id) => [id, { toAirport: '', fromAirport: '' }])),
-    schedule: [],
-    gettingAround: '',
-    importantNumbers: '',
-  };
-}
-
-app.post('/parse', async (req, res) => {
+async function handleParse(req, res) {
   try {
-    const { pdfBase64, fileName } = req.body || {};
-    if (!pdfBase64) {
-      return res.status(400).json({ error: 'Missing pdfBase64 in body' });
-    }
-    let buffer;
-    try {
-      buffer = Buffer.from(pdfBase64, 'base64');
-    } catch (e) {
-      return res.status(400).json({ error: 'Invalid base64 in PDF data.' });
-    }
-    let text;
-    try {
-      text = await extractTextFromPdf(buffer);
-    } catch (e) {
-      console.error('pdf-parse error:', e);
-      return res.status(400).json({
-        error: 'Could not read the PDF. It may be corrupted, password-protected, or image-only (scanned). Try exporting as text or copying the text into the paste box.',
-      });
-    }
-    if (!text?.trim()) {
-      return res.status(400).json({ error: 'No text could be extracted from the PDF (maybe scanned images?). Try pasting the text or using an image of the page with Import.' });
-    }
-
-    if (openai) {
-      try {
-        const parsed = await parseWithOpenAI(text);
-        return res.json(parsed);
-      } catch (e) {
-        console.error('OpenAI parse error:', e);
-        const msg = e?.message || String(e);
-        return res.status(500).json({
-          error: msg.includes('API key') || msg.includes('401') ? 'Invalid or missing OPENAI_API_KEY. Check your server environment.' : `Extraction failed: ${msg}`,
-        });
-      }
-    }
-
-    const fallback = emptyTripData();
-    fallback.importantNumbers = 'PDF parser is running without OPENAI_API_KEY. Set OPENAI_API_KEY and restart the server to extract trip data from PDFs automatically.';
-    res.json(fallback);
+    const { pdfBase64 } = req.body || {};
+    if (!pdfBase64) return res.status(400).json({ error: 'Missing pdfBase64 in body' });
+    const parsed = await askClaudeJson([
+      { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: pdfBase64 } },
+      { type: 'text', text: `Extract trip information from this PDF. ${TRIP_DATA_SCHEMA}` },
+    ]);
+    res.json(parsed);
   } catch (e) {
     console.error('Parse request error:', e);
     res.status(500).json({ error: e?.message || 'Parse failed. Check the server terminal for details.' });
   }
-});
-
-async function extractTextFromImage(imageBase64, mimeType) {
-  if (!openai) throw new Error('OPENAI_API_KEY is required to extract text from images.');
-  const url = `data:${mimeType || 'image/jpeg'};base64,${imageBase64}`;
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: 'Extract all text from this image exactly as it appears. Include any dates, flight numbers, names, addresses, and other details. If there is no text, respond with the single word: NONE',
-          },
-          { type: 'image_url', image_url: { url } },
-        ],
-      },
-    ],
-    max_tokens: 4096,
-  });
-  const text = response.choices[0]?.message?.content?.trim();
-  if (!text || text === 'NONE') return '';
-  return text;
 }
 
-app.post('/ocr', async (req, res) => {
+async function handleOcr(req, res) {
   try {
     const { imageBase64, mimeType } = req.body || {};
-    if (!imageBase64) {
-      return res.status(400).json({ error: 'Missing imageBase64 in body' });
-    }
-    const text = await extractTextFromImage(imageBase64, mimeType || 'image/jpeg');
-    if (!text?.trim()) {
-      return res.status(400).json({ error: 'No text could be extracted from the image.' });
-    }
-    if (openai) {
-      const parsed = await parseWithOpenAI(text);
-      return res.json(parsed);
-    }
-    const fallback = emptyTripData();
-    fallback.importantNumbers = 'Set OPENAI_API_KEY to extract trip data from pasted/chosen images.';
-    res.json(fallback);
+    if (!imageBase64) return res.status(400).json({ error: 'Missing imageBase64 in body' });
+    const parsed = await askClaudeJson([
+      { type: 'image', source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: imageBase64 } },
+      { type: 'text', text: `Extract trip information from this image. ${TRIP_DATA_SCHEMA}` },
+    ]);
+    res.json(parsed);
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: e.message || 'OCR failed' });
+    console.error('OCR request error:', e);
+    res.status(500).json({ error: e?.message || 'OCR failed' });
   }
-});
+}
+
+// Same endpoints with and without /api prefix (Vite dev proxy strips /api)
+app.post('/parse', handleParse);
+app.post('/api/parse', handleParse);
+app.post('/ocr', handleOcr);
+app.post('/api/ocr', handleOcr);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
 // Serve built web app (for deployment: build with "npm run build" in web-app, then run server)
 const WEB_APP_ROOT = path.join(__dirname, '..', 'web-app', 'dist');
 if (fs.existsSync(WEB_APP_ROOT)) {
-  app.use(express.static(WEB_APP_ROOT));
+  app.use(express.static(WEB_APP_ROOT, {
+    setHeaders: (res, filePath) => {
+      // Never cache the HTML shell so a rebuilt app always shows up;
+      // hashed JS/CSS assets are safe to cache long-term.
+      if (filePath.endsWith('.html')) res.setHeader('Cache-Control', 'no-store');
+      else if (/\.(js|css)$/.test(filePath)) res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+    },
+  }));
   app.get('*', (req, res, next) => {
     if (req.method !== 'GET' || req.path.startsWith('/api')) return next();
     const p = path.join(WEB_APP_ROOT, req.path);
     if (fs.existsSync(p) && !fs.statSync(p).isDirectory()) return next();
+    res.setHeader('Cache-Control', 'no-store');
     res.sendFile(path.join(WEB_APP_ROOT, 'index.html'));
   });
 }
@@ -339,5 +307,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running at http://localhost:${PORT}`);
   if (fs.existsSync(WEB_APP_ROOT)) console.log('Serving web app from web-app/dist');
-  if (!OPENAI_API_KEY) console.log('Set OPENAI_API_KEY for automatic extraction from PDFs.');
+  if (!ANTHROPIC_API_KEY) console.log('Set ANTHROPIC_API_KEY (in .env) for PDF/image import and map suggestions.');
 });

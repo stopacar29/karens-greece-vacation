@@ -1,15 +1,14 @@
 import { useTrip } from '../context/TripContext';
-import { FAMILIES } from '../constants/families';
+import { FAMILIES, ACTIVITY_PARTIES, TOTAL_TRAVELERS } from '../constants/families';
 import type { ActivityItem } from '../types/trip';
 import { normalizeActivity, emptyActivityItem } from '../types/trip';
 import MonthDaySelect from '../components/MonthDaySelect';
-
-const ALL_FAMILY = { id: 'all', name: 'All' } as const;
+import ConfirmDeleteButton from '../components/ConfirmDeleteButton';
 
 export default function Travel() {
   const { tripData, updateTrip } = useTrip();
-  const familyList = tripData.families?.length ? tripData.families : FAMILIES;
-  const allFamilyList = [ALL_FAMILY, ...familyList];
+  const familyList = FAMILIES;
+  const allFamilyList = ACTIVITY_PARTIES;
 
   const getActivitiesForFamily = (familyId: string): ActivityItem[] => {
     const raw = tripData.activities?.[familyId];
@@ -42,7 +41,7 @@ export default function Travel() {
     <>
       <div className="card">
         <h2 className="sectionLabel">Activities</h2>
-        <p className="hint">Dinners, tours, and other planned activities. First option &quot;All&quot; applies to everyone. They will appear on the Schedule by date.</p>
+        <p className="hint">Dinners, tours, and other planned activities. Pick who it&apos;s for: &quot;Everyone&quot; means all {TOTAL_TRAVELERS} of us, &quot;Adults only&quot; means the grown-ups, or choose one family. Activities appear on the Schedule by date and stay saved until you delete them.</p>
         {allFamilyList.map((family) => {
           const activities = getActivitiesForFamily(family.id);
           const displayList = activities.length ? activities : [emptyActivityItem()];
@@ -73,7 +72,9 @@ export default function Travel() {
                     <label>Notes</label>
                     <input value={act.notes} onChange={(e) => updateActivity(family.id, index, 'notes', e.target.value)} placeholder="Optional notes" />
                   </div>
-                  <button type="button" className="secondary" onClick={() => removeActivity(family.id, index)} style={{ marginTop: 8, color: '#a00' }}>Delete</button>
+                  <div style={{ marginTop: 8 }}>
+                    <ConfirmDeleteButton label="Delete activity" onConfirm={() => removeActivity(family.id, index)} />
+                  </div>
                 </div>
               ))}
               <button type="button" className="secondary" onClick={() => addActivity(family.id)} style={{ marginTop: 8 }}>Add activity</button>
