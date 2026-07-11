@@ -270,11 +270,61 @@ async function handleOcr(req, res) {
   }
 }
 
+async function handleScan(req, res) {
+  try {
+    const { imageBase64, mimeType } = req.body || {};
+    if (!imageBase64) return res.status(400).json({ error: 'Missing imageBase64 in body' });
+    const parsed = await askClaudeJson([
+      { type: 'image', source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: imageBase64 } },
+      {
+        type: 'text',
+        text: `This is a photo of a travel document (booking confirmation, itinerary, ticket, email, etc.).
+1. Extract everything you can into "data" using the schema below.
+2. In "questions", list up to 5 short, plain-English questions about things you could NOT determine but need to file the data correctly — for example which family or party a booking belongs to, a missing date, time, city, or name. If everything is clear, use an empty list.
+Return valid JSON only, no markdown, shaped as: {"data": <schema object>, "questions": ["...", ...]}
+The schema for "data": ${TRIP_DATA_SCHEMA}`,
+      },
+    ]);
+    res.json(parsed);
+  } catch (e) {
+    console.error('Scan request error:', e);
+    res.status(500).json({ error: e?.message || 'Scan failed' });
+  }
+}
+
+async function handleScanRefine(req, res) {
+  try {
+    const { data, questions, answers } = req.body || {};
+    if (!data) return res.status(400).json({ error: 'Missing data in body' });
+    const qa = (questions || []).map((q, i) => `Q: ${q}\nA: ${(answers || [])[i] || '(no answer — use your best judgment)'}`).join('\n');
+    const parsed = await askClaudeJson([
+      {
+        type: 'text',
+        text: `You previously extracted this trip data from a photographed document:
+${JSON.stringify(data)}
+
+You asked the user these questions and got these answers:
+${qa}
+
+Apply the answers to the data (move items to the right family/party, fill in dates/times/names, correct anything the answers clarify). Return ONLY the corrected data JSON in the same schema — no wrapper object, no markdown. ${TRIP_DATA_SCHEMA}`,
+      },
+    ]);
+    res.json(parsed);
+  } catch (e) {
+    console.error('Scan refine error:', e);
+    res.status(500).json({ error: e?.message || 'Could not apply the answers' });
+  }
+}
+
 // Same endpoints with and without /api prefix (Vite dev proxy strips /api)
 app.post('/parse', handleParse);
 app.post('/api/parse', handleParse);
 app.post('/ocr', handleOcr);
 app.post('/api/ocr', handleOcr);
+app.post('/scan', handleScan);
+app.post('/api/scan', handleScan);
+app.post('/scan/refine', handleScanRefine);
+app.post('/api/scan/refine', handleScanRefine);
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 

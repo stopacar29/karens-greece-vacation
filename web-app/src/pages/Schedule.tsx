@@ -3,6 +3,7 @@ import { FAMILIES, ACTIVITY_PARTIES, partyName } from '../constants/families';
 import type { DayItem } from '../types/trip';
 import { normalizeFlight } from '../types/trip';
 import ConfirmDeleteButton from '../components/ConfirmDeleteButton';
+import { destinationLabel } from '../constants/airports';
 
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -100,7 +101,7 @@ export default function Schedule() {
           const flightDateKey = normalizeToDateKey(fl.departureDate);
           if (flightDateKey === dateKey && (fl.airline || fl.flightNumber || fl.departureAirport || fl.arrivalAirport)) {
             const desc = [fl.airline, fl.flightNumber].filter(Boolean).join(' ') || 'Flight';
-            const route = [fl.departureAirport, fl.arrivalAirport].filter(Boolean).join(' → ');
+            const route = [fl.departureAirport, destinationLabel(fl.arrivalAirport)].filter(Boolean).join(' → ');
             items.push({
               familyId: family.id,
               activity: route ? `${desc} ${route}` : desc,
@@ -198,19 +199,19 @@ function DayBlock({
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 12, fontSize: 14, tableLayout: 'fixed' }}>
           <colgroup>
-            <col style={{ width: '16%' }} />
-            <col style={{ width: '42%' }} />
             <col style={{ width: '15%' }} />
-            <col style={{ width: '15%' }} />
-            <col style={{ width: '12%' }} />
+            <col style={{ width: '38%' }} />
+            <col style={{ width: '17%' }} />
+            <col style={{ width: '17%' }} />
+            <col style={{ width: '13%' }} />
           </colgroup>
           <thead>
             <tr style={{ borderBottom: '1px solid #ddd', textAlign: 'left' }}>
-              <th style={{ padding: '6px 8px 6px 0', color: '#5c5c5c', fontWeight: 600 }}>Family</th>
-              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Activity</th>
-              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Departs</th>
-              <th style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Arrival</th>
-              <th style={{ padding: '6px 0 6px 8px', color: '#5c5c5c', fontWeight: 600, width: '12%' }} />
+              <th className="schedTh" style={{ padding: '6px 8px 6px 0', color: '#5c5c5c', fontWeight: 600 }}>Family</th>
+              <th className="schedTh" style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Activity</th>
+              <th className="schedTh" style={{ padding: '6px 12px 6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Departs</th>
+              <th className="schedTh" style={{ padding: '6px 8px', color: '#5c5c5c', fontWeight: 600 }}>Arrival</th>
+              <th style={{ padding: '6px 0 6px 8px', color: '#5c5c5c', fontWeight: 600, width: '13%' }} />
             </tr>
           </thead>
           <tbody>

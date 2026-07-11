@@ -7,6 +7,8 @@ import type { Config } from '@netlify/functions';
  * - POST /api/suggestions  { location, lat, lng }        -> { location, suggestions: [...] }
  * - POST /api/parse        { pdfBase64, fileName? }      -> partial TripData extracted from the PDF
  * - POST /api/ocr          { imageBase64, mimeType? }    -> partial TripData extracted from the image
+ * - POST /api/scan         { imageBase64, mimeType? }    -> { data, questions } — extract + ask what's unclear
+ * - POST /api/scan/refine  { data, questions, answers }  -> final TripData with the answers applied
  */
 
 const MODEL = 'claude-sonnet-4-6';
@@ -124,6 +126,42 @@ Return only valid JSON, no markdown.`,
       return Response.json(parseJson(text));
     }
 
+    if (path === '/api/scan') {
+      const { imageBase64, mimeType } = body as { imageBase64?: string; mimeType?: string };
+      if (!imageBase64) return Response.json({ error: 'Missing imageBase64 in body' }, { status: 400 });
+      const text = await askClaude([
+        { type: 'image', source: { type: 'base64', media_type: mimeType || 'image/jpeg', data: imageBase64 } },
+        {
+          type: 'text',
+          text: `This is a photo of a travel document (booking confirmation, itinerary, ticket, email, etc.).
+1. Extract everything you can into "data" using the schema below.
+2. In "questions", list up to 5 short, plain-English questions about things you could NOT determine but need to file the data correctly — for example which family or party a booking belongs to, a missing date, time, city, or name. If everything is clear, use an empty list.
+Return valid JSON only, no markdown, shaped as: {"data": <schema object>, "questions": ["...", ...]}
+The schema for "data": ${TRIP_DATA_SCHEMA}`,
+        },
+      ], 3000);
+      return Response.json(parseJson(text));
+    }
+
+    if (path === '/api/scan/refine') {
+      const { data, questions, answers } = body as { data?: unknown; questions?: string[]; answers?: string[] };
+      if (!data) return Response.json({ error: 'Missing data in body' }, { status: 400 });
+      const qa = (questions ?? []).map((q, i) => `Q: ${q}\nA: ${(answers ?? [])[i] || '(no answer — use your best judgment)'}`).join('\n');
+      const text = await askClaude([
+        {
+          type: 'text',
+          text: `You previously extracted this trip data from a photographed document:
+${JSON.stringify(data)}
+
+You asked the user these questions and got these answers:
+${qa}
+
+Apply the answers to the data (move items to the right family/party, fill in dates/times/names, correct anything the answers clarify). Return ONLY the corrected data JSON in the same schema — no wrapper object, no markdown. ${TRIP_DATA_SCHEMA}`,
+        },
+      ], 3000);
+      return Response.json(parseJson(text));
+    }
+
     return Response.json({ error: 'Not found' }, { status: 404 });
   } catch (e) {
     return Response.json({ error: e instanceof Error ? e.message : 'AI request failed' }, { status: 500 });
@@ -131,5 +169,5 @@ Return only valid JSON, no markdown.`,
 };
 
 export const config: Config = {
-  path: ['/api/suggestions', '/api/parse', '/api/ocr'],
+  path: ['/api/suggestions', '/api/parse', '/api/ocr', '/api/scan', '/api/scan/refine'],
 };

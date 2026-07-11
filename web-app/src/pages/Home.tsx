@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTrip } from '../context/TripContext';
 import type { TripData } from '../types/trip';
+import ScanDocument from '../components/ScanDocument';
 
 export default function Home() {
   const { tripData, mergeFromImport, saveToServer, loadFromServer } = useTrip();
@@ -99,6 +100,7 @@ export default function Home() {
         {message && (
           <div className={`message ${message.kind === 'ok' ? 'messageSuccess' : 'messageError'}`}>{message.text}</div>
         )}
+        <ScanDocument />
       </div>
     </>
   );

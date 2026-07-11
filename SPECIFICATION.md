@@ -39,7 +39,8 @@ Anywhere a reservation, stay, or activity is entered (Activities, Hotel / House,
 
 - Plain-language labels and hints on every page (e.g. "Everyone — all 17 of us" instead of a bare "All").
 - Nothing is lost by mistake: automatic saving, confirm-before-delete, offline tolerance.
-- The Schedule assembles itself from what's entered elsewhere (flights, check-ins, activities) so nobody has to enter anything twice.
+- The Schedule assembles itself from what's entered elsewhere (flights, check-ins, activities) so nobody has to enter anything twice. Flight destinations show the city name with the airport code ("Athens (ATH)").
+- **Scan a document** (Home → Data & backup): photograph a booking or itinerary; Claude extracts the details, asks follow-up questions for anything the document doesn't say (like which family it belongs to), and files the answers into the trip.
 - Friendly extras for the trip: Family Gallery photo sharing, interactive map with AI suggestions, travel information (tipping, outlets, currency, Greek and Turkish phrases).
 - The Guests page lists names only — the family knows who everyone is.
 - The trip map uses an English-labeled basemap (Esri World Street Map) and opens zoomed to show every stop from London to Cappadocia.

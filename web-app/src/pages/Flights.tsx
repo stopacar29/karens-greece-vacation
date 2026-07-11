@@ -4,6 +4,7 @@ import type { FlightInfo } from '../types/trip';
 import { normalizeFlight, MAX_FLIGHTS_PER_FAMILY } from '../types/trip';
 import MonthDaySelect from '../components/MonthDaySelect';
 import ConfirmDeleteButton from '../components/ConfirmDeleteButton';
+import { cityForCode } from '../constants/airports';
 
 function emptyFlight(): FlightInfo {
   return { departureDate: '', airline: '', flightNumber: '', departureAirport: '', departureTime: '', arrivalAirport: '', arrivalTime: '' };
@@ -77,6 +78,9 @@ export default function Flights() {
                 <div className="inputRow">
                   <label>Arrival airport</label>
                   <input value={fl.arrivalAirport} onChange={(e) => updateFlight(family.id, index, 'arrivalAirport', e.target.value.toUpperCase().slice(0, 3))} placeholder="e.g. ATH" />
+                  {cityForCode(fl.arrivalAirport) && (
+                    <span style={{ fontSize: 13, color: '#5c5c5c' }}>→ {cityForCode(fl.arrivalAirport)} ({fl.arrivalAirport})</span>
+                  )}
                 </div>
                 <div className="inputRow">
                   <label>Arrival time</label>
