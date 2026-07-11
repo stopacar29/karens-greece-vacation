@@ -101,7 +101,7 @@ export default function Schedule() {
           const flightDateKey = normalizeToDateKey(fl.departureDate);
           if (flightDateKey === dateKey && (fl.airline || fl.flightNumber || fl.departureAirport || fl.arrivalAirport)) {
             const desc = [fl.airline, fl.flightNumber].filter(Boolean).join(' ') || 'Flight';
-            const route = [fl.departureAirport, destinationLabel(fl.arrivalAirport)].filter(Boolean).join(' → ');
+            const route = [destinationLabel(fl.departureAirport), destinationLabel(fl.arrivalAirport)].filter(Boolean).join(' → ');
             items.push({
               familyId: family.id,
               activity: route ? `${desc} ${route}` : desc,

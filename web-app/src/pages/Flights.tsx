@@ -70,6 +70,9 @@ export default function Flights() {
                 <div className="inputRow">
                   <label>Departure Airport</label>
                   <input value={fl.departureAirport} onChange={(e) => updateFlight(family.id, index, 'departureAirport', e.target.value.toUpperCase().slice(0, 3))} placeholder="e.g. JFK" />
+                  {cityForCode(fl.departureAirport) && (
+                    <span style={{ fontSize: 13, color: '#5c5c5c' }}>→ {cityForCode(fl.departureAirport)} ({fl.departureAirport})</span>
+                  )}
                 </div>
                 <div className="inputRow">
                   <label>Departure time</label>
