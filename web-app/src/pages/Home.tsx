@@ -54,11 +54,7 @@ export default function Home() {
           backgroundColor: '#1a4d6d',
           borderRadius: '0 0 24px 24px',
           margin: '-24px -24px 24px -24px',
-          padding: '24px 24px 0',
-          minHeight: 320,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
+          padding: 24,
           overflow: 'hidden',
         }}
       >
@@ -66,12 +62,10 @@ export default function Home() {
           src="/santorini-karens-70th.png"
           alt="Santorini"
           style={{
-            maxWidth: '100%',
             width: '100%',
             height: 'auto',
-            maxHeight: 420,
-            objectFit: 'contain',
             display: 'block',
+            borderRadius: 8,
           }}
         />
       </div>
