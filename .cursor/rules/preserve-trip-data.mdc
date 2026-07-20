@@ -1,0 +1,46 @@
+---
+description: Always preserve existing trip data, photos, and videos — no destructive operations against shared storage
+alwaysApply: true
+---
+
+# Preserve All Existing Trip Data and Photos
+
+This app stores irreplaceable family memories. Shared trip data and gallery
+photos/videos live in **Netlify Blobs** (stores `karens-gallery` and the trip
+data store used by `trip.mts`) on the production site (staudachers.netlify.app).
+
+## Hard rules
+
+- **Never delete, overwrite, or truncate existing blobs** in the gallery or
+  trip stores. Do not call `store.delete(...)`, re-`set` an existing key with
+  new content, or wipe/recreate a store — unless the user explicitly asks to
+  delete a *specific* item.
+- **Never rename the blob stores** (`karens-gallery`, trip store). Renaming
+  orphans all existing data. If a new store is truly needed, migrate by
+  *copying* data over and confirm the copy before pointing code at it.
+- **Uploads must only add new keys.** Generate unique filenames (the existing
+  `Date.now()-random` pattern); never reuse an existing key.
+- **API changes must stay backward compatible with stored data.** Old image
+  URLs (`/api/gallery/images/<name>`) and existing trip JSON must keep
+  working after any refactor.
+- **Testing must not touch production storage.** Test uploads/changes against
+  local storage (`netlify dev` local blobs) — never against the live site's
+  stores.
+- **Bulk cleanup, "reset", or "start fresh" operations are forbidden** even if
+  they would simplify a fix. Ask the user first and get explicit confirmation
+  listing exactly what would be removed.
+
+## Examples
+
+```ts
+// ❌ BAD — wipes shared photos
+const { blobs } = await store.list();
+for (const b of blobs) await store.delete(b.key);
+
+// ❌ BAD — overwrites existing trip data wholesale during a "migration"
+await tripStore.set('trip', JSON.stringify(newDefaultData));
+
+// ✅ GOOD — additive only; existing keys untouched
+const name = `${Date.now()}-${Math.random().toString(36).slice(2, 10)}.jpg`;
+await store.set(name, bytes);
+```

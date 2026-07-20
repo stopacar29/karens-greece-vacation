@@ -3,9 +3,12 @@ import type { Config, Context } from '@netlify/functions';
 
 /**
  * Family Gallery API on Netlify.
- * - GET  /api/gallery                    -> { images: [{ url }] } (newest first)
- * - POST /api/gallery/upload             -> multipart form field "photo"
- * - GET  /api/gallery/images/:filename   -> the image bytes
+ * - GET    /api/gallery                    -> { images: [{ url }] } (newest first)
+ * - POST   /api/gallery/upload             -> multipart form field "photo"
+ * - GET    /api/gallery/images/:filename   -> the image bytes
+ * - DELETE /api/gallery/images/:filename   -> remove one photo (explicit,
+ *   user-confirmed single-photo deletes only — never bulk wipes; see
+ *   .cursor/rules/preserve-trip-data.mdc)
  *
  * Photos are stored in Netlify Blobs so they persist until intentionally
  * deleted (design goal #1).
@@ -30,12 +33,19 @@ export default async (req: Request, context: Context) => {
   const url = new URL(req.url);
   const path = url.pathname;
 
-  // GET /api/gallery/images/:filename
+  // GET or DELETE /api/gallery/images/:filename
   const imageMatch = path.match(/^\/api\/gallery\/images\/([0-9a-z.-]+)$/i);
-  if (imageMatch && req.method === 'GET') {
+  if (imageMatch && (req.method === 'GET' || req.method === 'DELETE')) {
     const name = imageMatch[1];
     const ext = name.split('.').pop()?.toLowerCase() ?? '';
     if (!IMAGE_TYPES[ext]) return new Response('Bad filename', { status: 400 });
+    if (req.method === 'DELETE') {
+      // Deletes exactly one named photo at the user's explicit request.
+      const existing = await store.get(name, { type: 'arrayBuffer' });
+      if (!existing) return Response.json({ error: 'Photo not found' }, { status: 404 });
+      await store.delete(name);
+      return Response.json({ ok: true });
+    }
     const blob = await store.get(name, { type: 'arrayBuffer' });
     if (!blob) return new Response('Not found', { status: 404 });
     return new Response(blob, {

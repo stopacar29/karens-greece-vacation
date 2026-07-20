@@ -12,6 +12,14 @@
 [functions]
   directory = "netlify/functions"
 
+# Local testing: `npx netlify-cli dev --offline` serves the site, the
+# /api functions, and a local (non-production) blob store on port 8888.
+[dev]
+  framework = "#custom"
+  command = "npm run dev"
+  targetPort = 5173
+  port = 8888
+
 # Single-page app: let React Router handle all non-API, non-file routes.
 [[redirects]]
   from = "/*"

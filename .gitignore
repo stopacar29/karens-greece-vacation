@@ -30,3 +30,6 @@ npm-debug.log*
 _to_delete/
 *.pdf
 *.numbers
+
+# Local Netlify folder
+.netlify
