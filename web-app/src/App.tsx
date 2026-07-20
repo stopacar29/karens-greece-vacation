@@ -6,6 +6,7 @@ import HotelHouse from './pages/HotelHouse';
 import Travel from './pages/Travel';
 import Guests from './pages/Guests';
 import FamilyGallery from './pages/FamilyGallery';
+import Memories from './pages/Memories';
 import TravelInformation from './pages/TravelInformation';
 import Map from './pages/Map';
 
@@ -19,6 +20,7 @@ export default function App() {
         <NavLink to="/hotel-house" className={({ isActive }) => (isActive ? 'active' : '')}>Hotel / House</NavLink>
         <NavLink to="/activities" className={({ isActive }) => (isActive ? 'active' : '')}>Activities</NavLink>
         <NavLink to="/family-gallery" className={({ isActive }) => (isActive ? 'active' : '')}>Family Gallery</NavLink>
+        <NavLink to="/memories" className={({ isActive }) => (isActive ? 'active' : '')}>Memories</NavLink>
         <NavLink to="/travel-information" className={({ isActive }) => (isActive ? 'active' : '')}>Travel Information</NavLink>
         <NavLink to="/map" className={({ isActive }) => (isActive ? 'active' : '')}>Map</NavLink>
         <NavLink to="/guests" className={({ isActive }) => (isActive ? 'active' : '')}>Guests</NavLink>
@@ -31,6 +33,7 @@ export default function App() {
         <Route path="/activities" element={<Travel />} />
         <Route path="/travel" element={<Navigate to="/activities" replace />} />
         <Route path="/family-gallery" element={<FamilyGallery />} />
+        <Route path="/memories" element={<Memories />} />
         <Route path="/travel-information" element={<TravelInformation />} />
         <Route path="/map" element={<Map />} />
         <Route path="/guests" element={<Guests />} />
