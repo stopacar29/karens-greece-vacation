@@ -1,10 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import JSZip from 'jszip';
 
-type ImageItem = { url: string };
+type ImageItem = { url: string; caption?: string };
 
 function apiBase(): string {
   return '';
+}
+
+const MAX_CAPTION_LENGTH = 4000;
+
+function filenameFromApiUrl(url: string): string {
+  return url.split('/').pop() || '';
+}
+
+function captionUrl(url: string): string {
+  return `${apiBase()}/api/gallery/images/${filenameFromApiUrl(url)}/caption`;
+}
+
+function firstLine(text: string): string {
+  return text.split('\n')[0];
 }
 
 // Netlify Functions reject request bodies over ~6MB (and base64 encoding
@@ -100,6 +114,10 @@ export default function FamilyGallery() {
   const [downloadProgress, setDownloadProgress] = useState('');
   const [deleting, setDeleting] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [editingCaptionUrl, setEditingCaptionUrl] = useState<string | null>(null);
+  const [captionDraft, setCaptionDraft] = useState('');
+  const [savingCaption, setSavingCaption] = useState(false);
+  const [captionError, setCaptionError] = useState<string | null>(null);
 
   const loadImages = useCallback(async () => {
     setLoading(true);
@@ -177,6 +195,43 @@ export default function FamilyGallery() {
       );
     } else if (uploaded > 1) {
       setNotice(`${uploaded} photos uploaded.`);
+    }
+  };
+
+  const startEditingCaption = (url: string, current: string) => {
+    setCaptionError(null);
+    setEditingCaptionUrl(url);
+    setCaptionDraft(current);
+  };
+
+  const cancelEditingCaption = () => {
+    setEditingCaptionUrl(null);
+    setCaptionDraft('');
+    setCaptionError(null);
+  };
+
+  const saveCaption = async (url: string) => {
+    setSavingCaption(true);
+    setCaptionError(null);
+    try {
+      const res = await fetch(captionUrl(url), {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ caption: captionDraft }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Could not save the comment');
+      }
+      const data = await res.json();
+      const caption = typeof data.caption === 'string' && data.caption ? data.caption : undefined;
+      setImages((prev) => prev.map((img) => (img.url === url ? { ...img, caption } : img)));
+      setEditingCaptionUrl(null);
+      setCaptionDraft('');
+    } catch (e) {
+      setCaptionError(e instanceof Error ? e.message : 'Could not save the comment');
+    } finally {
+      setSavingCaption(false);
     }
   };
 
@@ -261,6 +316,90 @@ export default function FamilyGallery() {
   };
 
   const busy = uploading || downloading || deleting;
+  const viewerImage = images.find((img) => img.url === viewerUrl) ?? null;
+
+  const renderCaption = (img: ImageItem, variant: 'grid' | 'viewer') => {
+    const isEditing = editingCaptionUrl === img.url;
+    const wrapperStyle: React.CSSProperties =
+      variant === 'grid'
+        ? { padding: '8px 10px', background: '#fff' }
+        : { width: '100%', maxWidth: 480 };
+
+    if (isEditing) {
+      return (
+        <div style={wrapperStyle} onClick={(e) => e.stopPropagation()}>
+          <textarea
+            value={captionDraft}
+            onChange={(e) => setCaptionDraft(e.target.value)}
+            rows={3}
+            maxLength={MAX_CAPTION_LENGTH}
+            placeholder="Add a comment about this photo…"
+            autoFocus
+            disabled={savingCaption}
+            style={{
+              width: '100%',
+              padding: 8,
+              border: '1px solid #ddd',
+              borderRadius: 6,
+              fontSize: 14,
+              resize: 'vertical',
+              boxSizing: 'border-box',
+              fontFamily: 'inherit',
+            }}
+          />
+          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+            <button
+              className="btn btnPrimary"
+              style={{ marginLeft: 0, padding: '6px 12px', fontSize: 13 }}
+              disabled={savingCaption}
+              onClick={() => saveCaption(img.url)}
+            >
+              {savingCaption ? 'Saving…' : 'Save'}
+            </button>
+            <button
+              className="btn btnSecondary"
+              style={{ marginLeft: 0, padding: '6px 12px', fontSize: 13 }}
+              disabled={savingCaption}
+              onClick={cancelEditingCaption}
+            >
+              Cancel
+            </button>
+          </div>
+          {captionError && <p style={{ color: '#e0857a', margin: '6px 0 0', fontSize: 13 }}>{captionError}</p>}
+        </div>
+      );
+    }
+
+    return (
+      <div
+        style={{ ...wrapperStyle, cursor: 'pointer' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          startEditingCaption(img.url, img.caption || '');
+        }}
+      >
+        {img.caption ? (
+          <p
+            style={{
+              margin: 0,
+              fontSize: 13,
+              color: variant === 'grid' ? '#3c3c3c' : '#f0f0f0',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+            title={img.caption}
+          >
+            {firstLine(img.caption)}
+          </p>
+        ) : (
+          <p style={{ margin: 0, fontSize: 13, color: variant === 'grid' ? '#8a8a8a' : '#ccc', fontStyle: 'italic' }}>
+            + Add a comment
+          </p>
+        )}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -418,6 +557,7 @@ export default function FamilyGallery() {
                       {isSelected ? '✓' : ''}
                     </span>
                   )}
+                  {renderCaption(img, 'grid')}
                 </div>
               );
             })}
@@ -452,6 +592,7 @@ export default function FamilyGallery() {
               borderRadius: 8,
             }}
           />
+          {viewerImage && renderCaption(viewerImage, 'viewer')}
           <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', gap: 10, flexWrap: 'wrap', justifyContent: 'center' }}>
             <button className="btn btnSecondary" style={{ marginLeft: 0 }} disabled={busy} onClick={() => downloadUrls([viewerUrl])}>
               {downloading ? 'Downloading…' : 'Download'}

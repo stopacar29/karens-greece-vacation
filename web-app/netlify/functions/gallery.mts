@@ -3,18 +3,23 @@ import type { Config, Context } from '@netlify/functions';
 
 /**
  * Family Gallery API on Netlify.
- * - GET    /api/gallery                    -> { images: [{ url }] } (newest first)
- * - POST   /api/gallery/upload             -> multipart form field "photo"
- * - GET    /api/gallery/images/:filename   -> the image bytes
- * - DELETE /api/gallery/images/:filename   -> remove one photo (explicit,
+ * - GET    /api/gallery                          -> { images: [{ url, caption? }] } (newest first)
+ * - POST   /api/gallery/upload                   -> multipart form field "photo"
+ * - GET    /api/gallery/images/:filename         -> the image bytes
+ * - DELETE /api/gallery/images/:filename         -> remove one photo (explicit,
  *   user-confirmed single-photo deletes only — never bulk wipes; see
  *   .cursor/rules/preserve-trip-data.mdc)
+ * - PUT    /api/gallery/images/:filename/caption -> { caption } set/edit the
+ *   comment shown under a photo
  *
  * Photos are stored in Netlify Blobs so they persist until intentionally
- * deleted (design goal #1).
+ * deleted (design goal #1). Captions live in a separate store keyed by
+ * filename so editing a caption never touches the photo bytes.
  */
 const STORE_NAME = 'karens-gallery';
+const CAPTIONS_STORE_NAME = 'karens-gallery-captions';
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024; // 10MB
+const MAX_CAPTION_LENGTH = 4000;
 const IMAGE_TYPES: Record<string, string> = {
   jpg: 'image/jpeg',
   jpeg: 'image/jpeg',
@@ -23,6 +28,8 @@ const IMAGE_TYPES: Record<string, string> = {
   webp: 'image/webp',
 };
 
+type CaptionRecord = { caption: string; updatedAt: string };
+
 function extForType(type: string): string | null {
   const entry = Object.entries(IMAGE_TYPES).find(([, t]) => t === type.toLowerCase());
   return entry ? entry[0] : null;
@@ -30,8 +37,37 @@ function extForType(type: string): string | null {
 
 export default async (req: Request, context: Context) => {
   const store = getStore(STORE_NAME);
+  const captionsStore = getStore(CAPTIONS_STORE_NAME);
   const url = new URL(req.url);
   const path = url.pathname;
+
+  // PUT /api/gallery/images/:filename/caption
+  const captionMatch = path.match(/^\/api\/gallery\/images\/([0-9a-z.-]+)\/caption$/i);
+  if (captionMatch && req.method === 'PUT') {
+    const name = captionMatch[1];
+    const ext = name.split('.').pop()?.toLowerCase() ?? '';
+    if (!IMAGE_TYPES[ext]) return Response.json({ error: 'Bad filename' }, { status: 400 });
+    const existingPhoto = await store.get(name, { type: 'arrayBuffer' });
+    if (!existingPhoto) return Response.json({ error: 'Photo not found' }, { status: 404 });
+    let body: { caption?: unknown };
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const caption = typeof body.caption === 'string' ? body.caption.trim() : '';
+    if (caption.length > MAX_CAPTION_LENGTH) {
+      return Response.json({ error: 'That comment is too long' }, { status: 413 });
+    }
+    if (caption) {
+      const record: CaptionRecord = { caption, updatedAt: new Date().toISOString() };
+      await captionsStore.setJSON(name, record);
+      return Response.json({ url: `/api/gallery/images/${name}`, caption: record.caption });
+    }
+    // Empty text clears the comment for this photo.
+    await captionsStore.delete(name);
+    return Response.json({ url: `/api/gallery/images/${name}`, caption: '' });
+  }
 
   // GET or DELETE /api/gallery/images/:filename
   const imageMatch = path.match(/^\/api\/gallery\/images\/([0-9a-z.-]+)$/i);
@@ -44,6 +80,8 @@ export default async (req: Request, context: Context) => {
       const existing = await store.get(name, { type: 'arrayBuffer' });
       if (!existing) return Response.json({ error: 'Photo not found' }, { status: 404 });
       await store.delete(name);
+      // Clean up that photo's comment too — it's meaningless once the photo is gone.
+      await captionsStore.delete(name);
       return Response.json({ ok: true });
     }
     const blob = await store.get(name, { type: 'arrayBuffer' });
@@ -77,12 +115,20 @@ export default async (req: Request, context: Context) => {
   // GET /api/gallery
   if (path === '/api/gallery' && req.method === 'GET') {
     const { blobs } = await store.list();
-    const images = blobs
+    const keys = blobs
       .map((b) => b.key)
       .filter((k) => /\.(jpg|jpeg|png|gif|webp)$/i.test(k))
       .sort()
-      .reverse() // filenames start with a timestamp, so this is newest first
-      .map((k) => ({ url: `/api/gallery/images/${k}` }));
+      .reverse(); // filenames start with a timestamp, so this is newest first
+    const { blobs: captionBlobs } = await captionsStore.list();
+    const captionKeys = new Set(captionBlobs.map((b) => b.key));
+    const images = await Promise.all(
+      keys.map(async (k) => {
+        if (!captionKeys.has(k)) return { url: `/api/gallery/images/${k}` };
+        const record = (await captionsStore.get(k, { type: 'json' })) as CaptionRecord | null;
+        return { url: `/api/gallery/images/${k}`, caption: record?.caption || undefined };
+      })
+    );
     return Response.json({ images });
   }
 
@@ -90,5 +136,5 @@ export default async (req: Request, context: Context) => {
 };
 
 export const config: Config = {
-  path: ['/api/gallery', '/api/gallery/upload', '/api/gallery/images/*'],
+  path: ['/api/gallery', '/api/gallery/upload', '/api/gallery/images/*', '/api/gallery/images/*/caption'],
 };

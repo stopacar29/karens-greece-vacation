@@ -109,6 +109,28 @@ function ensureGalleryDir() {
     fs.mkdirSync(GALLERY_DIR, { recursive: true });
   }
 }
+
+// Comments/captions live in a small sidecar JSON file next to the photos, keyed
+// by filename, so editing a caption never touches the photo bytes themselves.
+const CAPTIONS_FILE = path.join(GALLERY_DIR, 'captions.json');
+const MAX_CAPTION_LENGTH = 4000;
+
+function readCaptions() {
+  ensureGalleryDir();
+  if (!fs.existsSync(CAPTIONS_FILE)) return {};
+  try {
+    const raw = fs.readFileSync(CAPTIONS_FILE, 'utf8');
+    return raw ? JSON.parse(raw) : {};
+  } catch (e) {
+    console.error('Read captions error:', e);
+    return {};
+  }
+}
+
+function writeCaptions(captions) {
+  ensureGalleryDir();
+  fs.writeFileSync(CAPTIONS_FILE, JSON.stringify(captions, null, 2), 'utf8');
+}
 const galleryStorage = multer.diskStorage({
   destination: (_req, _file, cb) => {
     ensureGalleryDir();
@@ -137,11 +159,53 @@ app.get('/api/gallery', (req, res) => {
   try {
     ensureGalleryDir();
     const names = fs.readdirSync(GALLERY_DIR).filter((n) => /\.(jpg|jpeg|png|gif|webp)$/i.test(n));
-    const images = names.map((n) => ({ url: `/api/gallery/images/${n}` }));
+    const captions = readCaptions();
+    const images = names.map((n) => ({ url: `/api/gallery/images/${n}`, caption: captions[n]?.caption || undefined }));
     res.json({ images });
   } catch (e) {
     console.error('Gallery list error:', e);
     res.status(500).json({ error: e?.message || 'Failed to list images' });
+  }
+});
+
+app.put('/api/gallery/images/:filename/caption', (req, res) => {
+  try {
+    const name = path.basename(req.params.filename);
+    if (!/^[0-9a-z\-\.]+\.(jpg|jpeg|png|gif|webp)$/i.test(name)) return res.status(400).json({ error: 'Bad filename' });
+    const filePath = path.resolve(GALLERY_DIR, name);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Photo not found' });
+    const caption = typeof req.body?.caption === 'string' ? req.body.caption.trim() : '';
+    if (caption.length > MAX_CAPTION_LENGTH) return res.status(413).json({ error: 'That comment is too long' });
+    const captions = readCaptions();
+    if (caption) {
+      captions[name] = { caption, updatedAt: new Date().toISOString() };
+    } else {
+      delete captions[name];
+    }
+    writeCaptions(captions);
+    res.json({ url: `/api/gallery/images/${name}`, caption });
+  } catch (e) {
+    console.error('Gallery caption error:', e);
+    res.status(500).json({ error: e?.message || 'Failed to save comment' });
+  }
+});
+
+app.delete('/api/gallery/images/:filename', (req, res) => {
+  try {
+    const name = path.basename(req.params.filename);
+    if (!/^[0-9a-z\-\.]+\.(jpg|jpeg|png|gif|webp)$/i.test(name)) return res.status(400).json({ error: 'Bad filename' });
+    const filePath = path.resolve(GALLERY_DIR, name);
+    if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Photo not found' });
+    fs.unlinkSync(filePath);
+    const captions = readCaptions();
+    if (captions[name]) {
+      delete captions[name];
+      writeCaptions(captions);
+    }
+    res.json({ ok: true });
+  } catch (e) {
+    console.error('Gallery delete error:', e);
+    res.status(500).json({ error: e?.message || 'Failed to delete photo' });
   }
 });
 
